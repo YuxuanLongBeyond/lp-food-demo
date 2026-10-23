@@ -1,7 +1,8 @@
 // verify.test.mjs — 锚定全部已审计数字（战略文档 §一仪表盘 / §十一重验表 / G1·G2 算例正本）
 // 断言原则：文档精确可表达的数（如 0.3596、1.7720、0.2832）用精确分数相等；
-// 含无理结构的数（Lys·HCl 游离碱 14619/18265 参与的 S3）用 4 位小数舍入对账。
-// 已知两处文档差异（README 对账表）：S1 min AAS 文档写 ≥1.31（复算 1.238）、影子价格首段 27.6（精确 27.3）。
+// 含无理结构的数（Lys·HCl 游离碱 14619/18265、USDA 逐格小数参与的 v02 档）用 4 位小数舍入对账。
+// v0.1 的 12 项经典锚点全部保留（classic 盘＋v01_typical 档）；v0.2 新增锚点全部由引擎生成，
+// 并经复解探针/中心差分交叉验证后才冻结（README 与 docs/caliber 对账表第 3 条：FAO 模式三格差异）。
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -11,7 +12,7 @@ import { dirname, join } from 'node:path';
 
 import { F } from '../src/fraction.js';
 import { solveLP } from '../src/lp.js';
-import { solveG1, g1Ladder, solveG2, g2AllScenarios, evalG2Recipe } from '../src/models.js';
+import { solveG1, g1Ladder, solveG2, g2AllScenarios, evalG2Recipe, g1SodiumSegments, g2QualityFrontier } from '../src/models.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const g1 = JSON.parse(readFileSync(join(here, '../data/g1-seasoning.json'), 'utf8'));
@@ -157,4 +158,140 @@ test('G2: 敏感性预设——Met 暴涨几乎不动价签；吨级采购进 ¥
   assert.equal(s3met.sub(F.from('1.7776')).toDecimal(4), 0.0024);    // 仅 +2.4 厘/100g
   const ton = g2AllScenarios(g2, { pea: '15', rice: '15' });
   assert.equal(ton.scenarios.s2.costPerKgProduct.toDecimal(2), 15.49);
+});
+
+// ———————————— v0.2：武器面板精确输出（RHS 区间 / 价格区间） ————————————
+
+test('v0.2 LP: RHS 基不变区间与价格区间（经典盘 2608 档，复解探针对账）', () => {
+  const r = solveG1(g1, { ncap: '2608' });
+  const iNa = r.problem.constraints.findIndex((c) => c.name === 'sodium');
+  // 钠区间下端＝2608（KCl 顶格天花板），上端＝4966＝393×12+125×2（KCl 退出基，MSG 2g 顶格）
+  assert.equal(r.rhsRange[iNa].lo.toString(), '2608');
+  assert.equal(r.rhsRange[iNa].hi.toString(), '4966');
+  // 区间内影子价格恒定、越过上端换段（复解探针）
+  assert.equal(r.shadowPer100mgPerTon.toDecimal(2), 27.31);
+  const justAbove = solveG1(g1, { ncap: '4966.001' });
+  assert.ok(Math.abs(justAbove.shadowPer100mgPerTon.toDecimal(2) - 27.31) > 0.5);
+  // 价格区间：NaCl 涨到 ¥37/3=12.333/kg 换基（KCl 相对竞争力反转点）；YE 降到 ¥4.929304 入基；KCl 上界无穷（2608 档配方被可行性钉死）
+  const jN = r.problem.varNames.indexOf('nacl');
+  const jY = r.problem.varNames.indexOf('ye');
+  const jK = r.problem.varNames.indexOf('kcl');
+  assert.equal(r.priceRange[jN].hi.mul(1000).toString(), '37/3');
+  assert.equal(r.priceRange[jY].lo.mul(1000).toDecimal(6), 4.929304);
+  assert.equal(r.priceRange[jK].hi, null);
+});
+
+// ———————————— v0.2：G1 扩展盘（12 原料） ————————————
+
+test('v0.2 G1 扩展盘：2608 档 0.380967（经典解＋香辛/砂糖下限固定成本）；苦味行贴线', () => {
+  const r = solveG1(g1, { palette: 'extended', ncap: '2608' });
+  assert.equal(r.status, 'optimal');
+  assert.equal(r.costPer100g.toString(), F.from('89051/233750').toString());
+  assert.equal(r.costPer100g.toDecimal(6), 0.380967);
+  // 顶点结构：NaCl 6、KCl 8（苦味贴线）、I+G 开始置换 MSG；钾＝524×8 精确
+  assert.equal(r.recipe.nacl.toString(), '6');
+  assert.equal(r.recipe.kcl.toString(), '8');
+  assert.equal(r.potassium.toString(), '4192');
+  const iB = r.problem.constraints.findIndex((c) => c.name === 'bitter');
+  assert.ok(r.binding[iB]);
+  // 扩展盘比经典盘高 0.0214（香辛/砂糖下限固定成本 0.0212 ＋ 2608 档微量 I+G 置换；引擎精确差）
+  assert.equal(r.costPer100g.sub(solveG1(g1, { ncap: '2608' }).costPer100g).toDecimal(4), 0.0214);
+});
+
+test('v0.2 G1 病种模式：高血压档可解（掩蔽放松 KCl）；经典盘不可行；CKD 控钾不可行（张力输出）', () => {
+  const hyp = solveG1(g1, { palette: 'extended', disease: 'hypertension' });
+  assert.equal(hyp.status, 'optimal');
+  assert.equal(hyp.costPer100g.toString(), F.from('1689527/3930000').toString());
+  assert.equal(hyp.costPer100g.toDecimal(4), 0.4299);
+  assert.equal(hyp.recipe.kcl.toString(), '3815/393');   // KCl 9.71g > 8：掩蔽在起作用
+  assert.equal(hyp.recipe.lac_k.toString(), '671/393');  // 苦味行：9.71 − 1×1.71 = 8 贴线
+  assert.equal(hyp.recipe.ig.toString(), '1/4');
+  assert.equal(hyp.sodium.toString(), '1875');
+  assert.equal(solveG1(g1, { palette: 'classic', disease: 'hypertension' }).status, 'infeasible');
+  assert.equal(solveG1(g1, { palette: 'extended', disease: 'ckd' }).status, 'infeasible');
+});
+
+test('v0.2 G1 参数化曲线：四段精确拐点 2612/2378.25/1641.375/1494，影子价格与中心差分一致', () => {
+  const segs = g1SodiumSegments(g1, { palette: 'extended' });
+  assert.equal(segs.length, 4);
+  const lo = segs.map((s) => s.lo.toString());
+  const hi = segs.map((s) => s.hi.toString());
+  assert.deepEqual(hi, ['4716', '2612', '9513/4', '13131/8']);
+  assert.deepEqual(lo, ['2612', '9513/4', '13131/8', '1494']);
+  // 段斜率＝影子价格（¥/吨·100mg）：27.31 → 41.71（I+G 置换）→ 78.20（掩蔽）→ 95.17（柠檬酸）
+  assert.equal(segs[0].shadow.toString(), '32200/1179');
+  assert.equal(segs[1].shadow.toString(), '7800/187');
+  assert.equal(segs[2].shadow.toString(), '92200/1179');
+  assert.equal(segs[3].shadow.toString(), '37400/393');
+  // 中心差分交叉验证第 3 段（cap=2000±2）：收紧钠的成本斜率＝段影子价格
+  const up = solveG1(g1, { palette: 'extended', ncap: '2002' });
+  const dn = solveG1(g1, { palette: 'extended', ncap: '1998' });
+  const fd = dn.costPer100g.sub(up.costPer100g).div(4).mul(100).mul(10000); // ¥/吨·100mg
+  assert.ok(Math.abs(fd.sub(segs[2].shadow).toNumber()) < 0.01, `fd=${fd.toDecimal(4)}`);
+  // 可行下限＝1494（393×3.75＋65×0.25＋5×0.8）：恰可行、1493 不可行
+  const floor = solveG1(g1, { palette: 'extended', ncap: '1494' });
+  assert.equal(floor.status, 'optimal');
+  assert.equal(floor.costPer100g.toString(), F.from('2311/5000').toString());
+  assert.equal(floor.recipe.nacl.toString(), '15/4');
+  assert.equal(floor.recipe.citric.toString(), '3/2');
+  assert.equal(solveG1(g1, { palette: 'extended', ncap: '1493' }).status, 'infeasible');
+});
+
+test('v0.2 G1 「1+6」：演示档全松、成本不变；GB 声称档（无糖 0.5 vs 甜味下限 2）不可行', () => {
+  const off = solveG1(g1, { palette: 'extended', ncap: '2608' });
+  const demo = solveG1(g1, { palette: 'extended', ncap: '2608', onex6: 'demo' });
+  assert.equal(demo.costPer100g.toString(), off.costPer100g.toString()); // 6 行全松
+  const n6bound = demo.problem.constraints.some((c, i) => c.name.startsWith('n6_') && demo.binding[i]);
+  assert.equal(n6bound, false);
+  assert.equal(solveG1(g1, { palette: 'extended', ncap: '2608', onex6: 'gb_claims' }).status, 'infeasible');
+});
+
+// ———————————— v0.2：G2 数据升级（USDA 逐格＋FAO 2013＋分项消化率） ————————————
+
+test('v0.2 G2 USDA 派生：SPI SAA 逐格折算 (1.13+1.046)×1000/88.32＝1700/69 mg/g；FAO Table 5 直录', () => {
+  const spi = g2.variables.find((v) => v.key === 'spi');
+  const gv = spi.aa_usda.aa_g_per_100g;
+  const saa = F.from(gv.met).add(F.from(gv.cys)).mul(1000).div(F.from(spi.aa_usda.protein_g_per_100g));
+  assert.equal(saa.toString(), '1700/69'); // ≈24.64（v01 文献典型 29——USDA 逐格更紧，推高 DIAAS 档 Met 需求）
+  // FAO 2013 原报告 Table 5 直录（对账表第 3 条：v01 转引值三格不符，v01 档保留锚点）
+  const child = g2.patterns.child_2013.mg_per_g_protein;
+  assert.deepEqual([child.saa, child.thr, child.trp], ['27', '31', '8.5']);
+  const old = g2.patterns.preschool.mg_per_g_protein;
+  assert.deepEqual([old.saa, old.thr, old.trp], ['31', '34', '11']);
+});
+
+test('v0.2 G2 v02 档：谷朊粉改写 S0 基线 1.2067；赖氨酸成硬约束（晶体进 S1）；S2=S3 同价', () => {
+  const s0 = solveG2(g2, { scenario: 's0', profile: 'v02_usda' });
+  assert.equal(s0.costPer100g.toString(), F.from('181/150').toString());
+  assert.equal(s0.recipe.wheat.toString(), '200/3');   // 66.67g 谷朊粉（¥9/kg）
+  assert.equal(s0.costPerKgProtein.toDecimal(2), 15.08);
+  const s1 = solveG2(g2, { scenario: 's1', profile: 'v02_usda' });
+  assert.equal(s1.costPer100g.toDecimal(4), 1.4725);
+  assert.ok(s1.recipe.lys_hcl.isPos());                 // FAO 2013 成人 Lys 48＋小麦 Lys 22 → 晶体进场
+  assert.equal(s1.scores.lys.ratio.toString(), '1');    // Lys 贴线＝限制性氨基酸
+  assert.equal(s1.recipe.wheat.toString(), '30');       // 麸质过敏原上限贴线
+  const s2 = solveG2(g2, { scenario: 's2', profile: 'v02_usda' });
+  const s3 = solveG2(g2, { scenario: 's3', profile: 'v02_usda' });
+  assert.equal(s2.costPer100g.toString(), s3.costPer100g.toString()); // 分项消化率口径下同一顶点双口径最优
+  assert.equal(s2.costPer100g.toDecimal(4), 1.4777);
+  // USDA 逐格后「纯混配达幼儿级」被推翻：S2′/S3′ 均不可行（v01 档 S2′ 可行——数据口径改变结论）
+  assert.equal(solveG2(g2, { scenario: 's2b', profile: 'v02_usda' }).status, 'infeasible');
+  assert.equal(solveG2(g2, { scenario: 's3b', profile: 'v02_usda' }).status, 'infeasible');
+  assert.equal(solveG2(g2, { scenario: 's2b' }).status, 'optimal');
+});
+
+test('v0.2 G2 质量前沿：S2 v02 λmax＝563/512＝1.099609（口感上限内可同时推到 1.10）', () => {
+  const fr = g2QualityFrontier(g2, { scenario: 's2', profile: 'v02_usda' }, 2);
+  assert.equal(fr.lambdaMax.toString(), '563/512');
+  const at1 = fr.points[0];
+  const s2 = solveG2(g2, { scenario: 's2', profile: 'v02_usda' });
+  assert.equal(at1.cost.toString(), s2.costPer100g.toString());
+  const atMax = fr.points[fr.points.length - 1];
+  assert.ok(atMax.cost.gt(at1.cost)); // 曲线单调上翘
+});
+
+test('v0.2 G2 交替最优检测：v01 S1 为真（豌豆/大米等价），S3 与 v02 S1 为假', () => {
+  assert.equal(solveG2(g2, { scenario: 's1' }).alternateOptima, true);
+  assert.equal(solveG2(g2, { scenario: 's3' }).alternateOptima, false);
+  assert.equal(solveG2(g2, { scenario: 's1', profile: 'v02_usda' }).alternateOptima, false);
 });

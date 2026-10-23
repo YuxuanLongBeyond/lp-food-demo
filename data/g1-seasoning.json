@@ -1,5 +1,6 @@
 {
   "id": "g1-seasoning",
+  "schema": 2,
   "grade": "demo",
   "grade_note": {
     "zh": "演示级：文献/示意系数＋精确 LP 求解。对外只能讲方向与量级，不可当商业报价。",
@@ -10,8 +11,18 @@
     "en": "100 g instant-noodle seasoning packet (illustrative category)"
   },
   "source_doc": {
-    "zh": "《LP配方与食品健康转型全方面调研》§3.2–3.3（2026-10-22，精确分数顶点求解；本演示器用精确有理数单纯形独立复算）",
-    "en": "LP Formulation & Food-Health Transition Survey §3.2–3.3 (2026-10-22, exact rational vertex enumeration; this demo independently re-solves with exact rational simplex)"
+    "zh": "《LP配方与食品健康转型全方面调研》§3.2–3.3（2026-10-22，精确分数顶点求解；本演示器用精确有理数单纯形独立复算）。v0.2 扩盘原料清单＝同文 §3.4「可扩变量」路线图（I+G／柠檬酸／蘑菇粉／海带粉／香辛料／乳酸钾掩蔽）＋实测标签词汇（食品研究/label_work）。",
+    "en": "LP Formulation & Food-Health Transition Survey §3.2–3.3 (2026-10-22, exact rational vertex enumeration; this demo independently re-solves with exact rational simplex). The v0.2 extended palette = the same survey §3.4 \"expandable variables\" route map (I+G / citric acid / mushroom / kelp / spices / potassium-lactate masking) + real label vocabulary (label_work)."
+  },
+  "palettes": {
+    "classic": {
+      "keys": ["nacl", "kcl", "msg", "ye", "carrier"],
+      "name": { "zh": "经典 5 料盘（v0.1 已审计口径）", "en": "Classic 5-ingredient palette (v0.1 audited caliber)" }
+    },
+    "extended": {
+      "keys": ["nacl", "kcl", "msg", "ye", "carrier", "ig", "citric", "mushroom", "kelp", "spice", "lac_k", "sugar"],
+      "name": { "zh": "扩展 12 料盘（§3.4 可扩变量）", "en": "Extended 12-ingredient palette (§3.4 expandable variables)" }
+    }
   },
   "variables": [
     {
@@ -25,7 +36,8 @@
         "price": { "source": "示意口径，接近 1688 食品级批发价", "date": "2026-10-22", "to_calibrate": true },
         "sodium": { "source": "化学计量：Na 22.99/58.44 ≈ 39.3% → 393 mg/g", "date": "2026-10-22", "to_calibrate": false },
         "saltiness": { "source": "定义基准（咸度系数=1）", "date": "2026-10-22", "to_calibrate": true }
-      }
+      },
+      "n6": { "energy_kj_per_g": "0", "protein_g_per_g": "0", "fat_g_per_g": "0", "satfat_g_per_g": "0", "carb_g_per_g": "0", "sugar_g_per_g": "0" }
     },
     {
       "key": "kcl",
@@ -34,10 +46,16 @@
       "sodium_mg_per_g": "0",
       "saltiness_eq": "0.75",
       "umami_eq": "0",
+      "potassium_mg_per_g": "524",
+      "bitter_eq": "1",
+      "cap_g_per_100g": { "classic": "8", "extended": "12" },
       "provenance": {
         "price": { "source": "示意口径，接近 1688 食品级批发价", "date": "2026-10-22", "to_calibrate": true },
-        "saltiness": { "source": "文献典型值（咸度等效约 0.6–0.8 取 0.75）", "date": "2026-10-22", "to_calibrate": true }
-      }
+        "saltiness": { "source": "文献典型值（咸度等效约 0.6–0.8 取 0.75）", "date": "2026-10-22", "to_calibrate": true },
+        "potassium": { "source": "化学计量：K 39.10/74.55 ≈ 52.4% → 524 mg/g", "date": "2026-10-23", "to_calibrate": false },
+        "bitter": { "source": "定义基准（苦味当量=1）；硬上限 classic 8g＝v0.1 苦味上限，extended 12g＝安全上限（苦味另由 bitter 行控制）", "date": "2026-10-23", "to_calibrate": true }
+      },
+      "n6": { "energy_kj_per_g": "0", "protein_g_per_g": "0", "fat_g_per_g": "0", "satfat_g_per_g": "0", "carb_g_per_g": "0", "sugar_g_per_g": "0" }
     },
     {
       "key": "msg",
@@ -50,7 +68,8 @@
         "price": { "source": "示意口径，接近 1688 食品级批发价", "date": "2026-10-22", "to_calibrate": true },
         "sodium": { "source": "示意口径（一水合物理论值约 123 mg/g，取整 125）", "date": "2026-10-22", "to_calibrate": true },
         "umami": { "source": "定义基准（鲜味系数=1）", "date": "2026-10-22", "to_calibrate": true }
-      }
+      },
+      "n6": { "energy_kj_per_g": "0", "protein_g_per_g": "0", "fat_g_per_g": "0", "satfat_g_per_g": "0", "carb_g_per_g": "0", "sugar_g_per_g": "0" }
     },
     {
       "key": "ye",
@@ -63,7 +82,8 @@
         "price": { "source": "示意口径，接近 1688 食品级批发价", "date": "2026-10-22", "to_calibrate": true },
         "sodium": { "source": "文献典型值（产品间离散大）", "date": "2026-10-22", "to_calibrate": true },
         "umami": { "source": "文献典型值（相对 MSG 等效）", "date": "2026-10-22", "to_calibrate": true }
-      }
+      },
+      "n6": { "energy_kj_per_g": "8.4", "protein_g_per_g": "0.5", "fat_g_per_g": "0", "satfat_g_per_g": "0", "carb_g_per_g": "0.25", "sugar_g_per_g": "0", "provenance": { "source": "YE 典型成分（蛋白 40–65% 取 50，碳水约 25%）·演示级", "date": "2026-10-23", "to_calibrate": true } }
     },
     {
       "key": "carrier",
@@ -74,20 +94,172 @@
       "umami_eq": "0",
       "provenance": {
         "price": { "source": "大宗常识口径（演示级占位）", "date": "2026-10-22", "to_calibrate": true }
-      }
+      },
+      "n6": { "energy_kj_per_g": "16", "protein_g_per_g": "0", "fat_g_per_g": "0", "satfat_g_per_g": "0", "carb_g_per_g": "0.95", "sugar_g_per_g": "0", "provenance": { "source": "麦芽糊精碳水 ≥90%、能量约 16 kJ/g·演示级", "date": "2026-10-23", "to_calibrate": true } }
+    },
+    {
+      "key": "ig",
+      "name": { "zh": "I+G（呈味核苷酸二钠）", "en": "I+G (disodium ribonucleotides)" },
+      "price_cny_per_kg": "90",
+      "sodium_mg_per_g": "65",
+      "umami_eq": "8",
+      "cap_g_per_100g": { "extended": "0.5" },
+      "provenance": {
+        "price": { "source": "1688 食品级 20% I+G 混合物示意区间 70–110 元/kg 取 90", "date": "2026-10-23", "to_calibrate": true },
+        "sodium": { "source": "化学计量近似：5'-呈味核苷酸二钠 Na 占比约 6–7% → 65 mg/g", "date": "2026-10-23", "to_calibrate": true },
+        "umami": { "source": "与谷氨酸协同增效（超可加），此处按典型配比（MSG ≥2g、I+G ≤0.3g）线性化为有效系数 8；只在典型配比附近成立，偏离后不再可靠——协同非线性是 v0.2 明示的演示级局限", "date": "2026-10-23", "to_calibrate": true }
+      },
+      "n6": { "energy_kj_per_g": "0", "protein_g_per_g": "0", "fat_g_per_g": "0", "satfat_g_per_g": "0", "carb_g_per_g": "0", "sugar_g_per_g": "0" }
+    },
+    {
+      "key": "citric",
+      "name": { "zh": "柠檬酸（酸提咸）", "en": "Citric acid (acid-enhanced saltiness)" },
+      "price_cny_per_kg": "12",
+      "sodium_mg_per_g": "0",
+      "acid_gain": "0.25",
+      "cap_g_per_100g": { "extended": "1.5" },
+      "provenance": {
+        "price": { "source": "1688 无水柠檬酸食品级示意区间 10–14 元/kg 取 12", "date": "2026-10-23", "to_calibrate": true },
+        "acid_gain": { "source": "「酸提咸」文献方向性效应的示意系数：每克柠檬酸约折 0.25g 盐咸度当量（LP 调研 §3.4 路线三）", "date": "2026-10-23", "to_calibrate": true }
+      },
+      "n6": { "energy_kj_per_g": "0", "protein_g_per_g": "0", "fat_g_per_g": "0", "satfat_g_per_g": "0", "carb_g_per_g": "0", "sugar_g_per_g": "0", "provenance": { "source": "有机酸按 GB 28050 标示口径能量计 0·演示级", "date": "2026-10-23", "to_calibrate": true } }
+    },
+    {
+      "key": "mushroom",
+      "name": { "zh": "蘑菇粉（天然鲜味）", "en": "Mushroom powder (natural umami)" },
+      "price_cny_per_kg": "45",
+      "sodium_mg_per_g": "15",
+      "umami_eq": "0.15",
+      "potassium_mg_per_g": "45",
+      "cap_g_per_100g": { "extended": "4" },
+      "provenance": {
+        "price": { "source": "1688 香菇/蘑菇粉食品级示意区间 35–60 元/kg 取 45", "date": "2026-10-23", "to_calibrate": true },
+        "sodium": { "source": "香菇粉典型含钠约 0.1–0.2%（干基）→ 15 mg/g", "date": "2026-10-23", "to_calibrate": true },
+        "potassium": { "source": "干香菇典型含钾约 4–5% → 45 mg/g", "date": "2026-10-23", "to_calibrate": true },
+        "umami": { "source": "含谷氨酸/鸟苷酸天然鲜味，相对 MSG 等效示意 0.15", "date": "2026-10-23", "to_calibrate": true }
+      },
+      "n6": { "energy_kj_per_g": "9", "protein_g_per_g": "0.2", "fat_g_per_g": "0.03", "satfat_g_per_g": "0", "carb_g_per_g": "0.5", "sugar_g_per_g": "0.05", "provenance": { "source": "干香菇粉典型宏量成分·演示级", "date": "2026-10-23", "to_calibrate": true } }
+    },
+    {
+      "key": "kelp",
+      "name": { "zh": "海带粉（天然鲜味）", "en": "Kelp powder (natural umami)" },
+      "price_cny_per_kg": "35",
+      "sodium_mg_per_g": "80",
+      "umami_eq": "0.25",
+      "potassium_mg_per_g": "24",
+      "cap_g_per_100g": { "extended": "3" },
+      "provenance": {
+        "price": { "source": "1688 海带粉食品级示意区间 25–45 元/kg 取 35", "date": "2026-10-23", "to_calibrate": true },
+        "sodium": { "source": "干海带典型含钠约 0.6–1.0% 取 0.8% → 80 mg/g（天然钠源，计入总钠）", "date": "2026-10-23", "to_calibrate": true },
+        "potassium": { "source": "干海带典型含钾约 1.8–2.6% → 24 mg/g", "date": "2026-10-23", "to_calibrate": true },
+        "umami": { "source": "谷氨酸丰富（海带鲜味来源），相对 MSG 等效示意 0.25", "date": "2026-10-23", "to_calibrate": true }
+      },
+      "n6": { "energy_kj_per_g": "7", "protein_g_per_g": "0.1", "fat_g_per_g": "0.01", "satfat_g_per_g": "0", "carb_g_per_g": "0.45", "sugar_g_per_g": "0", "provenance": { "source": "干海带粉典型宏量成分（含碘：上限 3g/100g 亦控制碘摄入）·演示级", "date": "2026-10-23", "to_calibrate": true } }
+    },
+    {
+      "key": "spice",
+      "name": { "zh": "香辛料（风味复杂度）", "en": "Spices (flavor complexity)" },
+      "price_cny_per_kg": "22",
+      "sodium_mg_per_g": "5",
+      "spice_eq": "1",
+      "floor_g_per_100g": { "extended": "0.8" },
+      "cap_g_per_100g": { "extended": "4" },
+      "provenance": {
+        "price": { "source": "1688 复合香辛料（葱/蒜/辣椒粉）示意区间 15–30 元/kg 取 22", "date": "2026-10-23", "to_calibrate": true },
+        "sodium": { "source": "香辛料粉本底钠示意 5 mg/g", "date": "2026-10-23", "to_calibrate": true },
+        "floor": { "source": "风味复杂度下限 0.8g/100g（LP 调研 §3.4「风味复杂度」路线，实测标签均含香辛料）", "date": "2026-10-23", "to_calibrate": true }
+      },
+      "n6": { "energy_kj_per_g": "9", "protein_g_per_g": "0.12", "fat_g_per_g": "0.05", "satfat_g_per_g": "0.01", "carb_g_per_g": "0.5", "sugar_g_per_g": "0.05", "provenance": { "source": "复合香辛料粉典型宏量成分·演示级", "date": "2026-10-23", "to_calibrate": true } }
+    },
+    {
+      "key": "lac_k",
+      "name": { "zh": "乳酸钾（KCl 苦味掩蔽）", "en": "Potassium lactate (KCl bitterness masker)" },
+      "price_cny_per_kg": "18",
+      "sodium_mg_per_g": "0",
+      "bitter_eq": "-1",
+      "potassium_mg_per_g": "305",
+      "cap_g_per_100g": { "extended": "2.5" },
+      "provenance": {
+        "price": { "source": "1688 食品级乳酸钾示意区间 15–22 元/kg 取 18（按固体计）", "date": "2026-10-23", "to_calibrate": true },
+        "potassium": { "source": "化学计量：乳酸钾 C3H5KO3，K 39.10/128.17 ≈ 30.5% → 305 mg/g（纯品口径）", "date": "2026-10-23", "to_calibrate": false },
+        "bitter": { "source": "LP 调研 §3.4：掩蔽剂（乳酸钾/琥珀酸等）可放松 KCl 苦味上限——每克掩蔽 1 当量示意（-1）；放松幅度＝苦味行系数的直接后果", "date": "2026-10-23", "to_calibrate": true }
+      },
+      "n6": { "energy_kj_per_g": "0", "protein_g_per_g": "0", "fat_g_per_g": "0", "satfat_g_per_g": "0", "carb_g_per_g": "0", "sugar_g_per_g": "0", "provenance": { "source": "有机酸盐按标示口径能量计 0·演示级", "date": "2026-10-23", "to_calibrate": true } }
+    },
+    {
+      "key": "sugar",
+      "name": { "zh": "白砂糖（甜味平衡）", "en": "Sugar (sweetness balance)" },
+      "price_cny_per_kg": "6",
+      "sodium_mg_per_g": "0",
+      "sweet_eq": "1",
+      "floor_g_per_100g": { "extended": "2" },
+      "cap_g_per_100g": { "extended": "6" },
+      "provenance": {
+        "price": { "source": "白砂糖大宗价示意区间 5.5–7 元/kg 取 6", "date": "2026-10-23", "to_calibrate": true },
+        "floor": { "source": "调料包甜味平衡示意下限 2g/100g（实测标签常见白砂糖 2–6 位配料）", "date": "2026-10-23", "to_calibrate": true }
+      },
+      "n6": { "energy_kj_per_g": "17", "protein_g_per_g": "0", "fat_g_per_g": "0", "satfat_g_per_g": "0", "carb_g_per_g": "1", "sugar_g_per_g": "1", "provenance": { "source": "蔗糖碳水化合物 100%、能量约 17 kJ/g", "date": "2026-10-23", "to_calibrate": false } }
     }
+  ],
+  "constraint_rows": [
+    { "key": "total", "sense": "eq", "ones": true, "rhs_field": "total_g" },
+    { "key": "saltiness", "sense": "ge", "terms": ["saltiness_eq", "acid_gain"], "rhs_field": "saltiness_geq_g" },
+    { "key": "umami", "sense": "ge", "terms": ["umami_eq"], "rhs_field": "umami_geq_g" },
+    { "key": "sweet", "sense": "ge", "terms": ["sweet_eq"], "rhs_field": "sweet_geq_g", "palettes": ["extended"] },
+    { "key": "spice", "sense": "ge", "terms": ["spice_eq"], "rhs_field": "spice_geq_g", "palettes": ["extended"] },
+    { "key": "bitter", "sense": "le", "terms": ["bitter_eq"], "rhs_field": "bitter_cap_units", "palettes": ["extended"] },
+    { "key": "sodium", "sense": "le", "terms": ["sodium_mg_per_g"], "dynamic": "sodium_cap" },
+    { "key": "potassium", "sense": "le", "terms": ["potassium_mg_per_g"], "dynamic": "potassium_cap" }
   ],
   "rhs": {
     "total_g": "100",
     "saltiness_geq_g": "12",
     "umami_geq_g": "2",
-    "kcl_cap_g": "8"
+    "sweet_geq_g": "2",
+    "spice_geq_g": "0.8",
+    "bitter_cap_units": "8",
+    "sodium_cap_default_mg": "2608",
+    "sodium_cap_max_mg": "4716"
   },
   "rhs_provenance": {
     "saltiness": { "source": "对标 12% 纯盐配方的咸度（示意）", "to_calibrate": true },
     "umami": { "source": "2g MSG 等效鲜味下限（示意）", "to_calibrate": true },
-    "kcl_cap": { "source": "KCl 苦味上限（文献典型 8–10g/100g 取 8；掩蔽剂可放松——技术路线）", "to_calibrate": true }
+    "sweet": { "source": "2g 砂糖甜味平衡下限（示意，实测标签常见 2–6g/100g）", "to_calibrate": true },
+    "spice": { "source": "香辛料 0.8g 下限（风味复杂度，示意）", "to_calibrate": true },
+    "bitter": { "source": "苦味当量上限 8＝v0.1 KCl 8g 上限同源；扩展盘由乳酸钾掩蔽按 -1/g 放松", "to_calibrate": true },
+    "sodium_default": { "source": "2608＝v0.1 经典盘天花板（393×6＋125×2，KCl 8g 顶格）；扩展盘可更低", "to_calibrate": false }
   },
+  "disease_modes": [
+    {
+      "key": "standard",
+      "name": { "zh": "标准（商业钠档）", "en": "Standard (commercial sodium)" },
+      "sodium_cap": null,
+      "potassium_cap": null,
+      "note": { "zh": "钠上限由滑杆控制。", "en": "Sodium cap follows the slider." }
+    },
+    {
+      "key": "hypertension",
+      "name": { "zh": "高血压模式（食养指南折算）", "en": "Hypertension mode (dietary-guideline mapping)" },
+      "sodium_cap": "1875",
+      "potassium_cap": null,
+      "note": {
+        "zh": "《成人高血压食养指南（2023）》：每日钠 ≤2000mg（盐 <5g）。演示折算：每包（8g）承载日钠预算 7.5% → 150mg/包 → 1875mg/100g。折算份额为演示假设·待标定；经典 5 料盘在此档不可行（天花板 2608），扩展盘（I+G＋酸提咸＋掩蔽放松 KCl）可解——扩盘解锁更低钠档。",
+        "en": "Adult Hypertension Dietary Guideline (2023): sodium ≤2000 mg/d (salt <5 g). Demo mapping: one 8 g packet carries 7.5% of the daily sodium budget → 150 mg/packet → 1875 mg/100 g. The share is a demo assumption, to be calibrated; infeasible on the classic palette (floor 2608), solvable on the extended palette (I+G + acid gain + masking-relaxed KCl) — expansion unlocks lower sodium."
+      },
+      "provenance": { "source": "01-官方指南与政策文件《成人高血压食养指南（2023）》钠 ≤2000mg/日、盐 <5g/日", "date": "2026-10-23", "to_calibrate": true }
+    },
+    {
+      "key": "ckd",
+      "name": { "zh": "CKD 模式（控钾＋限钠）", "en": "CKD mode (potassium-capped + sodium-capped)" },
+      "sodium_cap": "1875",
+      "potassium_cap": "3000",
+      "note": {
+        "zh": "《成人慢性肾脏病食养指南（2024）》：限磷控钾方向。演示折算：钾 ≤3000mg/100g（每包 240mg）。KCl 代盐与乳酸钾掩蔽均带钾（524/305 mg/g）——控钾直接挤压 KCl 路线：本盘预计不可行，如实输出。临床口径：CKD 患者慎用低钠盐（代盐），正是该模式要演示的约束张力；可行路线只剩 I+G／酸提咸／微结构盐（§3.4 其余路线）。",
+        "en": "Adult CKD Dietary Guideline (2024): limit phosphorus, control potassium. Demo mapping: K ≤3000 mg/100 g (240 mg/packet). Both KCl substitution and potassium-lactate masking carry potassium (524/305 mg/g) — capping K squeezes the KCl route out: expected infeasible on this palette, reported honestly. Clinically, CKD patients are advised against KCl salt substitutes; remaining routes are I+G / acid / microstructured salt (§3.4)."
+      },
+      "provenance": { "source": "01-官方指南与政策文件《成人慢性肾脏病食养指南（2024）》限磷控钾条款；钾折算为演示假设·待标定", "date": "2026-10-23", "to_calibrate": true }
+    }
+  ],
   "baselines": {
     "pure_salt": {
       "name": { "zh": "现实纯盐基线（12% 纯盐）", "en": "Pure-salt real-world baseline (12% salt)" },
@@ -106,20 +278,36 @@
     "li_per_cny": "1000"
   },
   "schema_1plus6": {
-    "zh": "GB 28050「1+6」全约束形状：钠为已验证主约束；能量/蛋白质/脂肪/饱和脂肪/碳水化合物/糖 6 项为结构占位（示意系数·待标定），演示多目标/ε-约束的数学形状，不伪造精度。",
-    "en": "GB 28050 '1+6' full-constraint shape: sodium is the verified primary constraint; energy/protein/fat/saturates/carbohydrate/sugars are structural placeholders (illustrative, to-be-calibrated), demonstrating the multi-objective / ε-constraint shape without fabricating precision.",
+    "zh": "GB 28050「1+6」全约束：钠为已验证主约束；能量/蛋白质/脂肪/饱和脂肪/碳水/糖 6 项 v0.2 起挂文献典型值系数（演示级·待标定），可开关激活——多目标/ε-约束的数学形状落地，不伪造精度。",
+    "en": "GB 28050 '1+6' full constraints: sodium is the verified primary constraint; since v0.2 the other six carry literature-typical coefficients (demo-grade, to-be-calibrated) behind a switch — the multi-objective / ε-constraint shape made real, without fabricating precision.",
+    "presets": {
+      "demo": {
+        "name": { "zh": "演示档（常规调料包形状）", "en": "Demo preset (typical pack shape)" },
+        "rhs": { "energy": "1700", "protein": "0", "fat": "3", "satfat": "1", "carb": "90", "sugar": "5" },
+        "note": { "zh": "全部演示值：常规调料包应可行且 6 行皆有松弛（对偶报告显示距门槛余量），展示 6 行同时入模的形状；蛋白质行下限 0（本品类无蛋白声称）。", "en": "All demo values: a typical pack stays feasible with slack on all six rows (the dual report shows headroom); protein floor is 0 (no protein claim for this category)." }
+      },
+      "gb_claims": {
+        "name": { "zh": "GB 声称档（无糖＋低脂＋低饱和脂肪）", "en": "GB-claims preset (sugar-free + low-fat + low-saturates)" },
+        "rhs": { "energy": "1700", "protein": "0", "fat": "3", "satfat": "1.5", "carb": "90", "sugar": "0.5" },
+        "note": {
+          "zh": "糖 0.5／脂肪 3／饱和脂肪 1.5 按 GB 28050「无糖／低脂（固体）／低饱和脂肪」声称门槛；能量/蛋白/碳水沿用演示值（本品类该三项声称无意义）。无糖门槛将迫使白砂糖退出、甜味需另行满足——正是 ε-约束开关要展示的形状变化。",
+          "en": "Sugar 0.5 / fat 3 / saturates 1.5 follow GB 28050 claim thresholds (sugar-free / low-fat solid / low-saturates); energy/protein/carb keep demo values (no meaningful claims for this category). The sugar-free threshold forces sugar out and sweetness must be met otherwise — exactly the shape change the ε-constraint switch demonstrates."
+        }
+      }
+    },
     "placeholders": [
-      { "key": "energy", "name": { "zh": "能量", "en": "Energy" }, "unit": "kJ/100g", "sense": "cap", "status": "placeholder" },
-      { "key": "protein", "name": { "zh": "蛋白质", "en": "Protein" }, "unit": "g/100g", "sense": "floor", "status": "placeholder" },
-      { "key": "fat", "name": { "zh": "脂肪", "en": "Fat" }, "unit": "g/100g", "sense": "cap", "status": "placeholder" },
-      { "key": "satfat", "name": { "zh": "饱和脂肪", "en": "Saturates" }, "unit": "g/100g", "sense": "cap", "status": "placeholder" },
-      { "key": "carb", "name": { "zh": "碳水化合物", "en": "Carbohydrate" }, "unit": "g/100g", "sense": "cap", "status": "placeholder" },
-      { "key": "sugar", "name": { "zh": "糖", "en": "Sugars" }, "unit": "g/100g", "sense": "cap", "status": "placeholder" }
+      { "key": "energy", "field": "energy_kj_per_g", "name": { "zh": "能量", "en": "Energy" }, "unit": "kJ/100g", "sense": "cap", "status": "literature-typical" },
+      { "key": "protein", "field": "protein_g_per_g", "name": { "zh": "蛋白质", "en": "Protein" }, "unit": "g/100g", "sense": "ge", "status": "literature-typical" },
+      { "key": "fat", "field": "fat_g_per_g", "name": { "zh": "脂肪", "en": "Fat" }, "unit": "g/100g", "sense": "cap", "status": "literature-typical" },
+      { "key": "satfat", "field": "satfat_g_per_g", "name": { "zh": "饱和脂肪", "en": "Saturates" }, "unit": "g/100g", "sense": "cap", "status": "literature-typical" },
+      { "key": "carb", "field": "carb_g_per_g", "name": { "zh": "碳水化合物", "en": "Carbohydrate" }, "unit": "g/100g", "sense": "cap", "status": "literature-typical" },
+      { "key": "sugar", "field": "sugar_g_per_g", "name": { "zh": "糖", "en": "Sugars" }, "unit": "g/100g", "sense": "cap", "status": "literature-typical" }
     ]
   },
   "sensitivity": {
+    "ncap_mg": { "min": "1200", "max": "4716", "step": "4", "default": "2608", "classic_min": "2608" },
     "kcl_price_cny_per_kg": { "min": "2", "max": "30", "step": "0.5", "default": "10" },
     "kcl_saltiness_eq": { "min": "0.5", "max": "0.95", "step": "0.01", "default": "0.75" },
-    "note": { "zh": "敏感度武器产品化（三件武器之三）：KCl ¥20/kg 或咸度系数 <0.6 附近成本跳升。", "en": "Sensitivity weapon productized: cost jumps near KCl ¥20/kg or saltiness coefficient < 0.6." }
+    "note": { "zh": "敏感度武器产品化（三件武器之三）。滑杆范围自此数据文件驱动（v0.1 为页面硬编码）。", "en": "Sensitivity weapon productized. Slider ranges are now driven by this data file (v0.1 hard-coded them in the page)." }
   }
 }

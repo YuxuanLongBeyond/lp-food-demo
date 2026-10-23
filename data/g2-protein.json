@@ -1,17 +1,32 @@
 {
   "id": "g2-protein",
+  "schema": 2,
   "grade": "demo",
   "grade_note": {
-    "zh": "演示级：文献典型值系数＋精确 LP 求解；价格锚全部带来源日期；未计风味/工艺/包装（LP 是原料下界）。",
-    "en": "Demo-grade: literature-typical coefficients + exact LP solve; all price anchors date-stamped; flavour/process/packaging excluded (LP is a raw-material lower bound)."
+    "zh": "演示级：v01＝文献典型值系数（v0.1 已审计口径）；v02＝USDA 逐格氨基酸＋FAO 2013 原报告模式＋分项消化率（中值）。价格锚全部带来源日期；未计风味/工艺/包装（LP 是原料下界）。",
+    "en": "Demo-grade: v01 = literature-typical coefficients (v0.1 audited caliber); v02 = USDA per-cell amino acids + FAO 2013 original-report patterns + per-ingredient digestibility (mid-values). All price anchors date-stamped; flavour/process/packaging excluded (LP is a raw-material lower bound)."
   },
   "product": {
     "zh": "100g 植物蛋白基料（蛋白 ≥80g/100g）",
     "en": "100 g plant-protein base (protein ≥ 80 g/100 g)"
   },
   "source_doc": {
-    "zh": "《G2蛋白混配LP算例：营养等价的最低成本求解（演示级）》（2026-10-22，Python fractions 精确顶点枚举；本演示器用精确有理数单纯形独立复算）",
-    "en": "G2 Protein-Blending LP Case (2026-10-22, exact vertex enumeration in Python fractions; this demo independently re-solves with exact rational simplex)"
+    "zh": "《G2蛋白混配LP算例：营养等价的最低成本求解（演示级）》（2026-10-22，Python fractions 精确顶点枚举；本演示器用精确有理数单纯形独立复算）。v0.2 数据升级＝该文 §八阶段1 任务拉前：USDA 逐格、酵母蛋白、分项 DIAAS、FAO 原报告核对。",
+    "en": "G2 Protein-Blending LP Case (2026-10-22, exact vertex enumeration in Python fractions; this demo independently re-solves with exact rational simplex). The v0.2 data upgrade pulls forward that document's Stage-1 tasks: USDA per-cell values, yeast protein, per-ingredient DIAAS digestibility, FAO original-report verification."
+  },
+  "data_profiles": {
+    "default": "v01_typical",
+    "v01_typical": {
+      "name": { "zh": "v01 文献典型值（v0.1 已审计口径）", "en": "v01 literature typicals (v0.1 audited caliber)" },
+      "keys": ["spi", "pea", "rice", "lys_hcl", "dl_met", "l_thr", "maltodextrin"],
+      "note": { "zh": "七原料＋文献典型矩阵＋全局 ×1.1 DIAAS 代理——12 项 v0.1 锚点全部锚定此档。", "en": "Seven ingredients + literature-typical matrix + the flat ×1.1 DIAAS proxy — all 12 v0.1 anchors pin to this profile." }
+    },
+    "v02_usda": {
+      "name": { "zh": "v02 USDA 逐格＋FAO 2013 原模式＋分项消化率", "en": "v02 USDA per-cell + FAO 2013 original patterns + per-ingredient digestibility" },
+      "keys": ["spi", "pea", "rice", "wheat", "yeast", "sunflower", "lys_hcl", "dl_met", "l_thr", "maltodextrin"],
+      "pattern_map": { "adult": "ocaa_2013", "preschool": "child_2013" },
+      "note": { "zh": "十原料（新入：酵母蛋白 2023 新食品原料、谷朊粉、葵花籽蛋白）；氨基酸矩阵优先 USDA FDC 逐格值（缺格沿用典型值并留痕）；评分模式换 FAO 2013 Table 5 原值；DIAAS 由全局乘子改为每原料分项消化率（文献区间中值）。", "en": "Ten ingredients (new: yeast protein, a 2023 China novel-food ingredient; vital wheat gluten; sunflower protein); amino-acid matrix prefers USDA FDC per-cell values (typical-value fallback is recorded); scoring patterns switch to FAO 2013 Table 5 originals; DIAAS moves from a flat multiplier to per-ingredient digestibility (literature mid-values)." }
+    }
   },
   "aa_order": ["his", "ile", "leu", "lys", "saa", "aaa", "thr", "trp", "val"],
   "aa_names": {
@@ -32,12 +47,22 @@
       "price_cny_per_kg": "18.2",
       "protein_fraction": "0.9",
       "aa_mg_per_g_protein": { "his": "26", "ile": "49", "leu": "78", "lys": "63", "saa": "29", "aaa": "89", "thr": "38", "trp": "13", "val": "49" },
+      "aa_usda": {
+        "fdc_id": "174276", "ndb": "16122",
+        "description": "Soy protein isolate (SR Legacy)",
+        "published": "2019-04-01", "retrieved": "2026-10-23",
+        "protein_g_per_100g": "88.32",
+        "aa_g_per_100g": { "his": "2.303", "ile": "4.253", "leu": "6.783", "lys": "5.327", "met": "1.13", "cys": "1.046", "phe": "4.593", "tyr": "3.222", "thr": "3.137", "trp": "1.116", "val": "4.098" },
+        "derived": "mg/g 蛋白 = aa_g×1000 ÷ 88.32（SAA=Met+Cys、AAA=Phe+Tyr），演示器按精确分数实时折算",
+        "note": { "zh": "USDA 蛋白 88.32g/100g 与产品规格 90% 口径并存：v02 矩阵用 FDC 逐格值，蛋白量仍按产品规格 0.90（口径差已留痕）。", "en": "USDA protein 88.32 g/100g coexists with the 90% product spec: v02 uses FDC per-cell values while protein content stays at the 0.90 spec (caliber difference recorded)." }
+      },
       "cap_g_per_100g": "60",
       "cap_reason": { "zh": "豆腥与过敏原分散（感官占位约束，未经感官验证）", "en": "Beany flavour & allergen dispersion (sensory placeholder, not sensory-validated)" },
+      "digestibility": { "value": "0.945", "source": "真回肠消化率文献区间 0.91–0.98 取中值", "date": "2026-10-23", "to_calibrate": true },
       "provenance": {
         "price": { "source": "ChemicalBook 食品级山东现货", "date": "2026-10", "to_calibrate": true },
         "protein": { "source": "产品规格典型值", "date": "2026-10-22", "to_calibrate": true },
-        "aa": { "source": "文献典型值（批间离散 ±10–15% 常见；v0.2 任务换 USDA/中国食物成分表逐格值）", "date": "2026-10-22", "to_calibrate": true }
+        "aa": { "source": "文献典型值（批间离散 ±10–15% 常见）；v02 档换 USDA FDC 174276 逐格值", "date": "2026-10-22", "to_calibrate": true }
       }
     },
     {
@@ -46,12 +71,14 @@
       "price_cny_per_kg": "20",
       "protein_fraction": "0.8",
       "aa_mg_per_g_protein": { "his": "25", "ile": "46", "leu": "82", "lys": "72", "saa": "23", "aaa": "89", "thr": "36", "trp": "9", "val": "48" },
+      "aa_usda": null,
       "cap_g_per_100g": "40",
       "cap_reason": { "zh": "豆腥（感官占位约束）", "en": "Beany flavour (sensory placeholder)" },
+      "digestibility": { "value": "0.87", "source": "真回肠消化率文献区间 0.82–0.92 取中值", "date": "2026-10-23", "to_calibrate": true },
       "provenance": {
         "price": { "source": "1688 批发 ¥15–25 中值（山东汇佳 80%≈¥25、90%≈¥26.6）", "date": "2026-10-22", "to_calibrate": true },
         "protein": { "source": "产品规格典型值", "date": "2026-10-22", "to_calibrate": true },
-        "aa": { "source": "文献典型值", "date": "2026-10-22", "to_calibrate": true }
+        "aa": { "source": "FDC 无豌豆分离蛋白 SR/Foundation 条目（仅整粒豌豆，谱不能代表分离蛋白）——v02 沿用文献典型值并留痕", "date": "2026-10-23", "to_calibrate": true }
       }
     },
     {
@@ -60,12 +87,86 @@
       "price_cny_per_kg": "20",
       "protein_fraction": "0.8",
       "aa_mg_per_g_protein": { "his": "24", "ile": "40", "leu": "82", "lys": "38", "saa": "43", "aaa": "95", "thr": "34", "trp": "13", "val": "56" },
+      "aa_usda": null,
       "cap_g_per_100g": "30",
       "cap_reason": { "zh": "供应与口感（占位约束）", "en": "Supply & mouthfeel (placeholder)" },
+      "digestibility": { "value": "0.935", "source": "真回肠消化率文献区间 0.90–0.97 取中值", "date": "2026-10-23", "to_calibrate": true },
       "provenance": {
         "price": { "source": "阿里国际站 ¥19.98 起订", "date": "2026-10-22", "to_calibrate": true },
         "protein": { "source": "产品规格典型值", "date": "2026-10-22", "to_calibrate": true },
-        "aa": { "source": "文献典型值", "date": "2026-10-22", "to_calibrate": true }
+        "aa": { "source": "FDC 无大米分离蛋白 SR/Foundation 条目——v02 沿用文献典型值并留痕", "date": "2026-10-23", "to_calibrate": true }
+      }
+    },
+    {
+      "key": "wheat",
+      "name": { "zh": "小麦蛋白（谷朊粉）", "en": "Vital wheat gluten" },
+      "price_cny_per_kg": "9",
+      "protein_fraction": "0.75",
+      "aa_mg_per_g_protein": { "his": "21", "ile": "34", "leu": "70", "lys": "20", "saa": "35", "aaa": "47", "thr": "26", "trp": "9", "val": "42" },
+      "aa_usda": {
+        "fdc_id": "169721", "ndb": "20076",
+        "description": "Wheat, durum (SR Legacy) — AA 谱代理：谷朊粉条目 FDC 168147 无氨基酸分解",
+        "published": "2019-04-01", "retrieved": "2026-10-23",
+        "protein_g_per_100g": "13.68",
+        "aa_g_per_100g": { "his": "0.322", "ile": "0.533", "leu": "0.934", "lys": "0.303", "met": "0.221", "cys": "0.286", "phe": "0.681", "tyr": "0.357", "thr": "0.366", "trp": "0.176", "val": "0.594" },
+        "derived": "mg/g 蛋白 = aa_g×1000 ÷ 13.68；谷朊粉蛋白量另按 FDC 168147（75.16g/100g）与产品规格 75%",
+        "note": { "zh": "代理口径：硬粒小麦全蛋白谱 ≈ 谷蛋白谱（麦谷蛋白+醇溶蛋白约占小麦蛋白 80%+，Lys 略低于全麦蛋白——方向已知，未修正，待标定）。", "en": "Proxy caliber: whole durum-wheat protein profile ≈ gluten profile (gluten proteins are 80%+ of wheat protein; gluten Lys runs slightly lower — direction known, uncorrected, to be calibrated)." }
+      },
+      "cap_g_per_100g": "30",
+      "cap_reason": { "zh": "麸质过敏原（GB 7718 强制标示；佔位上限）", "en": "Gluten allergen (GB 7718 mandatory labelling; placeholder cap)" },
+      "digestibility": { "value": "0.93", "source": "谷朊粉真回肠消化率文献示意区间 0.90–0.96 取中值", "date": "2026-10-23", "to_calibrate": true },
+      "provenance": {
+        "price": { "source": "1688 谷朊粉食品级示意区间 8–10 元/kg 取 9（大宗最廉蛋白源之一）", "date": "2026-10-23", "to_calibrate": true },
+        "protein": { "source": "产品规格 75%（FDC 168147 谷朊粉 75.16g/100g 同口径）", "date": "2026-10-23", "to_calibrate": true },
+        "aa": { "source": "v02 档用 FDC 169721 逐格值（硬粒小麦代理，见 note）；v01 典型值为文献典型", "date": "2026-10-23", "to_calibrate": true }
+      }
+    },
+    {
+      "key": "yeast",
+      "name": { "zh": "酵母蛋白（2023 新食品原料）", "en": "Yeast protein (2023 China novel-food ingredient)" },
+      "price_cny_per_kg": "60",
+      "protein_fraction": "0.8",
+      "aa_mg_per_g_protein": { "his": "22", "ile": "47", "leu": "72", "lys": "81", "saa": "27", "aaa": "71", "thr": "49", "trp": "13", "val": "57" },
+      "aa_usda": {
+        "fdc_id": "175043", "ndb": "18375",
+        "description": "Leavening agents, yeast, baker's, active dry (SR Legacy) — AA 谱源",
+        "published": "2019-04-01", "retrieved": "2026-10-23",
+        "protein_g_per_100g": "40.44",
+        "aa_g_per_100g": { "his": "0.91", "ile": "1.89", "leu": "2.92", "lys": "3.28", "met": "0.59", "cys": "0.5", "phe": "1.75", "tyr": "1.13", "thr": "1.99", "trp": "0.54", "val": "2.31" },
+        "derived": "mg/g 蛋白 = aa_g×1000 ÷ 40.44；商品酵母蛋白（≥80% 蛋白）按此谱＋产品规格蛋白量",
+        "note": { "zh": "口径差：烘焙活性干酵母粗蛋白含核酸氮（未扣除）；商品酵母蛋白经核酸去除工艺，Lys 富集谱保持但绝对值待标定。战略点名原料（与 G1 发酵增味线交汇）。", "en": "Caliber note: baker's-yeast crude protein includes nucleic-acid N (not deducted); commercial yeast protein undergoes nucleic-acid removal — the Lys-rich profile persists but absolute values need calibration. Named by the strategy (intersects G1's fermentation line)." }
+      },
+      "cap_g_per_100g": "25",
+      "cap_reason": { "zh": "嘌呤/核酸与风味（占位上限；CKD 相邻议题）", "en": "Purine/nucleic acid & flavour (placeholder cap; CKD-adjacent concern)" },
+      "digestibility": { "value": "0.88", "source": "酵母蛋白消化率文献示意区间 0.85–0.92 取中值", "date": "2026-10-23", "to_calibrate": true },
+      "provenance": {
+        "price": { "source": "酵母蛋白 B2B 示意区间 50–80 元/kg 取 60（新食品原料，规模化中）", "date": "2026-10-23", "to_calibrate": true },
+        "protein": { "source": "商品酵母蛋白产品规格 ≥80%", "date": "2026-10-23", "to_calibrate": true },
+        "aa": { "source": "v02 档用 FDC 175043 逐格值（活性干酵母谱）；v01 典型值为其圆整", "date": "2026-10-23", "to_calibrate": true }
+      }
+    },
+    {
+      "key": "sunflower",
+      "name": { "zh": "葵花籽蛋白", "en": "Sunflower seed protein" },
+      "price_cny_per_kg": "24",
+      "protein_fraction": "0.55",
+      "aa_mg_per_g_protein": { "his": "28", "ile": "50", "leu": "73", "lys": "41", "saa": "41", "aaa": "81", "thr": "41", "trp": "15", "val": "58" },
+      "aa_usda": {
+        "fdc_id": "170156", "ndb": "12041",
+        "description": "Seeds, sunflower seed flour, partially defatted (SR Legacy)",
+        "published": "2019-04-01", "retrieved": "2026-10-23",
+        "protein_g_per_100g": "48.06",
+        "aa_g_per_100g": { "his": "1.333", "ile": "2.403", "leu": "3.5", "lys": "1.977", "met": "1.043", "cys": "0.952", "phe": "2.466", "tyr": "1.406", "thr": "1.959", "trp": "0.735", "val": "2.775" },
+        "derived": "mg/g 蛋白 = aa_g×1000 ÷ 48.06；商品葵花籽浓缩蛋白（≈55%）按此谱＋产品规格蛋白量",
+        "note": { "zh": "SAA 富集源（41.5 mg/g）补豆类低 SAA；绿变（绿原酸氧化）为工艺约束方向，未建模。", "en": "SAA-rich source (41.5 mg/g) complementing legume SAA deficiency; greening (chlorogenic-acid oxidation) is an unmodelled process concern." }
+      },
+      "cap_g_per_100g": "30",
+      "cap_reason": { "zh": "色泽/绿变与口感（占位上限）", "en": "Colour/greening & mouthfeel (placeholder cap)" },
+      "digestibility": { "value": "0.88", "source": "葵花籽蛋白消化率文献示意区间 0.85–0.92 取中值", "date": "2026-10-23", "to_calibrate": true },
+      "provenance": {
+        "price": { "source": "1688 葵花籽蛋白粉示意区间 20–30 元/kg 取 24", "date": "2026-10-23", "to_calibrate": true },
+        "protein": { "source": "浓缩蛋白产品规格 ≈55%（FDC 脱脂葵花籽粉 48.06g/100g 同源）", "date": "2026-10-23", "to_calibrate": true },
+        "aa": { "source": "v02 档用 FDC 170156 逐格值（脱脂葵花籽粉）；v01 典型值为其圆整", "date": "2026-10-23", "to_calibrate": true }
       }
     },
     {
@@ -109,19 +210,34 @@
   ],
   "patterns": {
     "adult": {
-      "name": { "zh": "FAO 2013 成人模式", "en": "FAO 2013 adult pattern" },
+      "name": { "zh": "成人模式（2007 版 >18 岁维持模式）", "en": "Adult pattern (2007 >18 y maintenance)" },
       "mg_per_g_protein": { "his": "15", "ile": "30", "leu": "59", "lys": "45", "saa": "22", "aaa": "38", "thr": "23", "trp": "6", "val": "39" },
-      "provenance": { "source": "FAO 2013 Dietary Protein Quality Evaluation（转引，演示级）", "to_calibrate": true }
+      "provenance": { "source": "v0.1 转引口径。FAO 2013 原报告 Table 3 证实此为 2007 WHO/FAO/UNU >18 岁维持模式（15/30/59/45/22/38/23/6.0/39）；2013 Table 5 推荐用于评分的「3 岁以上」模式更严（见 ocaa_2013）——差异登对账表", "date": "2026-10-23", "to_calibrate": false }
     },
     "preschool": {
-      "name": { "zh": "FAO 2013 学龄前模式", "en": "FAO 2013 preschool pattern" },
+      "name": { "zh": "学龄前模式（v0.1 转引口径）", "en": "Preschool pattern (v0.1 transcribed caliber)" },
       "mg_per_g_protein": { "his": "20", "ile": "32", "leu": "66", "lys": "57", "saa": "31", "aaa": "52", "thr": "34", "trp": "11", "val": "43" },
-      "provenance": { "source": "FAO 2013（转引；年龄口径二手——6 月龄–3 岁与 3–10 岁表述不一，待核对 FAO 原报告）", "to_calibrate": true }
+      "provenance": { "source": "v0.1 转引口径。FAO 2013 原报告 Table 5「儿童 6 月龄–3 岁」为 20/32/66/57/27/52/31/8.5/43——SAA/Thr/Trp 三格不符（31/34/11 vs 27/31/8.5），差异登对账表；v01 档保留转引值（锚点不动），v02 档用原报告值", "date": "2026-10-23", "to_calibrate": false }
+    },
+    "ocaa_2013": {
+      "name": { "zh": "FAO 2013 Table 5：3 岁以上（大儿童/青少年/成人）", "en": "FAO 2013 Table 5: older child, adolescent, adult" },
+      "mg_per_g_protein": { "his": "16", "ile": "30", "leu": "61", "lys": "48", "saa": "23", "aaa": "41", "thr": "25", "trp": "6.6", "val": "40" },
+      "provenance": { "source": "FAO 2013《Dietary protein quality evaluation in human nutrition》Table 5（源自 Table 3 的 3–10 岁行）——原报告直录，2026-10-23 核对", "date": "2026-10-23", "to_calibrate": false }
+    },
+    "child_2013": {
+      "name": { "zh": "FAO 2013 Table 5：儿童 6 月龄–3 岁", "en": "FAO 2013 Table 5: child 6 months to 3 years" },
+      "mg_per_g_protein": { "his": "20", "ile": "32", "leu": "66", "lys": "57", "saa": "27", "aaa": "52", "thr": "31", "trp": "8.5", "val": "43" },
+      "provenance": { "source": "FAO 2013 Table 5（源自 Table 3 的 0.5 岁行）——原报告直录，2026-10-23 核对", "date": "2026-10-23", "to_calibrate": false }
+    },
+    "infant_2013": {
+      "name": { "zh": "FAO 2013 Table 5：婴儿 0–6 月（母乳谱，备查）", "en": "FAO 2013 Table 5: infant 0–6 months (breast-milk profile, reference)" },
+      "mg_per_g_protein": { "his": "21", "ile": "55", "leu": "96", "lys": "69", "saa": "33", "aaa": "94", "thr": "44", "trp": "17", "val": "55" },
+      "provenance": { "source": "FAO 2013 Table 5——原报告直录，2026-10-23 核对；无情景使用（婴儿配方不属本演示器范围）", "date": "2026-10-23", "to_calibrate": false }
     }
   },
   "diaas": {
     "demand_multiplier": "1.1",
-    "note": { "zh": "DIAAS 口径＝参考模式×1.1，统一代理 90% 消化率折损（粗代理）；真实分项真回肠消化率区间：SPI 0.91–0.98、豌豆 0.82–0.92、大米 0.90–0.97——v0.2/v0.3 任务换分项消化率。", "en": "DIAAS mode = pattern × 1.1 as a flat proxy for 90% digestibility (rough); true ileal digestibility ranges: SPI 0.91–0.98, pea 0.82–0.92, rice 0.90–0.97 — per-ingredient digestibility is a v0.2/v0.3 task." }
+    "note": { "zh": "v01 档 DIAAS 口径＝参考模式×1.1，统一代理 90% 消化率折损（粗代理，v0.1 已审计）；v02 档弃用乘子，改每原料分项真回肠消化率（variables[].digestibility，文献区间中值·待标定），需求侧模式不放大。", "en": "v01 DIAAS caliber = pattern × 1.1 as a flat 90%-digestibility proxy (rough, v0.1-audited); v02 drops the multiplier in favour of per-ingredient true ileal digestibility (variables[].digestibility, literature mid-values, to be calibrated) with an unamplified pattern." }
   },
   "rhs": {
     "total_g": "100",
@@ -136,8 +252,8 @@
     { "key": "s0", "name": { "zh": "S0 纯 SPI 基线", "en": "S0 pure-SPI baseline" }, "pattern": null, "diaas": false, "caps": false, "crystals": true, "note": { "zh": "只用蛋白约束，无口感上限、无氨基酸约束", "en": "Protein constraint only; no sensory caps, no AA constraints" } },
     { "key": "s1", "name": { "zh": "S1 成人全等价", "en": "S1 adult full equivalence" }, "pattern": "adult", "diaas": false, "caps": true, "crystals": true, "note": { "zh": "9 项 AAS ≥1（成人模式）＋口感上限，晶体可用", "en": "9 AAS ≥ 1 (adult) + sensory caps, crystals allowed" } },
     { "key": "s2", "name": { "zh": "S2 幼儿级全等价（AAS）", "en": "S2 preschool full equivalence (AAS)" }, "pattern": "preschool", "diaas": false, "caps": true, "crystals": true, "note": { "zh": "9 项 AAS ≥1（学龄前模式）", "en": "9 AAS ≥ 1 (preschool pattern)" } },
-    { "key": "s2b", "name": { "zh": "S2′ 幼儿级·禁晶体", "en": "S2′ preschool, no crystals" }, "pattern": "preschool", "diaas": false, "caps": true, "crystals": false, "note": { "zh": "纯植物互补独立达成幼儿级", "en": "Plant complementarity alone reaches preschool level" } },
-    { "key": "s3", "name": { "zh": "S3 幼儿级·DIAAS 口径", "en": "S3 preschool, DIAAS mode" }, "pattern": "preschool", "diaas": true, "caps": true, "crystals": true, "note": { "zh": "模式×1.1（消化率折损代理），晶体氨基酸进场", "en": "Pattern × 1.1 (digestibility proxy), crystal AAs enter" } },
+    { "key": "s2b", "name": { "zh": "S2′ 幼儿级·禁晶体", "en": "S2′ preschool, no crystals" }, "pattern": "preschool", "diaas": false, "caps": true, "crystals": false, "note": { "zh": "混配互补独立达成幼儿级（不用晶体）", "en": "Blending complementarity alone reaches preschool level (no crystals)" } },
+    { "key": "s3", "name": { "zh": "S3 幼儿级·DIAAS 口径", "en": "S3 preschool, DIAAS mode" }, "pattern": "preschool", "diaas": true, "caps": true, "crystals": true, "note": { "zh": "v01：模式×1.1（消化率折损代理），晶体氨基酸进场；v02：分项消化率口径", "en": "v01: pattern × 1.1 (digestibility proxy), crystal AAs enter; v02: per-ingredient digestibility caliber" } },
     { "key": "s3b", "name": { "zh": "S3′ 幼儿级·DIAAS·禁晶体", "en": "S3′ preschool, DIAAS, no crystals" }, "pattern": "preschool", "diaas": true, "caps": true, "crystals": false, "note": { "zh": "口感上限内 DIAAS 离开晶体不可达（预期无可行解）", "en": "DIAAS unreachable without crystals within sensory caps (expected infeasible)" } }
   ],
   "unit_conversions": {
@@ -147,6 +263,7 @@
   },
   "sensitivity_presets": [
     { "key": "met_surge", "label": { "zh": "蛋氨酸暴涨 23.5→52 元/kg", "en": "Met price surge 23.5→52 CNY/kg" }, "overrides": { "dl_met": "52" }, "note": { "zh": "S2 不用 Met 不受影响；S3 价签仅 +2.4 厘/100g", "en": "S2 uses no Met; S3 price tag moves only +0.24 fen (2.4 li)/100 g" } },
-    { "key": "tonnage", "label": { "zh": "吨级采购 豌豆/大米 20→15 元/kg", "en": "Tonnage purchasing: pea/rice 20→15 CNY/kg" }, "overrides": { "pea": "15", "rice": "15" }, "note": { "zh": "S2 降至 ≈¥15.49/kg 产品，进入 ¥15/kg 带", "en": "S2 drops to ≈ ¥15.49/kg product" } }
+    { "key": "tonnage", "label": { "zh": "吨级采购 豌豆/大米 20→15 元/kg", "en": "Tonnage purchasing: pea/rice 20→15 CNY/kg" }, "overrides": { "pea": "15", "rice": "15" }, "note": { "zh": "S2 降至 ≈¥15.49/kg 产品，进入 ¥15/kg 带", "en": "S2 drops to ≈ ¥15.49/kg product" } },
+    { "key": "gluten_surge", "label": { "zh": "谷朊粉 9→13 元/kg（小麦行情）", "en": "Wheat-gluten surge 9→13 CNY/kg" }, "overrides": { "wheat": "13" }, "note": { "zh": "仅 v02 档生效：测大宗最廉源的行情弹性", "en": "v02 profile only: stress-tests the cheapest bulk source" } }
   ]
 }
