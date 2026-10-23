@@ -1,0 +1,152 @@
+{
+  "id": "g2-protein",
+  "grade": "demo",
+  "grade_note": {
+    "zh": "演示级：文献典型值系数＋精确 LP 求解；价格锚全部带来源日期；未计风味/工艺/包装（LP 是原料下界）。",
+    "en": "Demo-grade: literature-typical coefficients + exact LP solve; all price anchors date-stamped; flavour/process/packaging excluded (LP is a raw-material lower bound)."
+  },
+  "product": {
+    "zh": "100g 植物蛋白基料（蛋白 ≥80g/100g）",
+    "en": "100 g plant-protein base (protein ≥ 80 g/100 g)"
+  },
+  "source_doc": {
+    "zh": "《G2蛋白混配LP算例：营养等价的最低成本求解（演示级）》（2026-10-22，Python fractions 精确顶点枚举；本演示器用精确有理数单纯形独立复算）",
+    "en": "G2 Protein-Blending LP Case (2026-10-22, exact vertex enumeration in Python fractions; this demo independently re-solves with exact rational simplex)"
+  },
+  "aa_order": ["his", "ile", "leu", "lys", "saa", "aaa", "thr", "trp", "val"],
+  "aa_names": {
+    "his": { "zh": "组氨酸 His", "en": "Histidine" },
+    "ile": { "zh": "异亮氨酸 Ile", "en": "Isoleucine" },
+    "leu": { "zh": "亮氨酸 Leu", "en": "Leucine" },
+    "lys": { "zh": "赖氨酸 Lys", "en": "Lysine" },
+    "saa": { "zh": "含硫氨基酸 SAA（Met+Cys）", "en": "Sulfur AAs (Met+Cys)" },
+    "aaa": { "zh": "芳香族氨基酸 AAA（Phe+Tyr）", "en": "Aromatic AAs (Phe+Tyr)" },
+    "thr": { "zh": "苏氨酸 Thr", "en": "Threonine" },
+    "trp": { "zh": "色氨酸 Trp", "en": "Tryptophan" },
+    "val": { "zh": "缬氨酸 Val", "en": "Valine" }
+  },
+  "variables": [
+    {
+      "key": "spi",
+      "name": { "zh": "大豆分离蛋白 SPI", "en": "Soy protein isolate (SPI)" },
+      "price_cny_per_kg": "18.2",
+      "protein_fraction": "0.9",
+      "aa_mg_per_g_protein": { "his": "26", "ile": "49", "leu": "78", "lys": "63", "saa": "29", "aaa": "89", "thr": "38", "trp": "13", "val": "49" },
+      "cap_g_per_100g": "60",
+      "cap_reason": { "zh": "豆腥与过敏原分散（感官占位约束，未经感官验证）", "en": "Beany flavour & allergen dispersion (sensory placeholder, not sensory-validated)" },
+      "provenance": {
+        "price": { "source": "ChemicalBook 食品级山东现货", "date": "2026-10", "to_calibrate": true },
+        "protein": { "source": "产品规格典型值", "date": "2026-10-22", "to_calibrate": true },
+        "aa": { "source": "文献典型值（批间离散 ±10–15% 常见；v0.2 任务换 USDA/中国食物成分表逐格值）", "date": "2026-10-22", "to_calibrate": true }
+      }
+    },
+    {
+      "key": "pea",
+      "name": { "zh": "豌豆蛋白", "en": "Pea protein" },
+      "price_cny_per_kg": "20",
+      "protein_fraction": "0.8",
+      "aa_mg_per_g_protein": { "his": "25", "ile": "46", "leu": "82", "lys": "72", "saa": "23", "aaa": "89", "thr": "36", "trp": "9", "val": "48" },
+      "cap_g_per_100g": "40",
+      "cap_reason": { "zh": "豆腥（感官占位约束）", "en": "Beany flavour (sensory placeholder)" },
+      "provenance": {
+        "price": { "source": "1688 批发 ¥15–25 中值（山东汇佳 80%≈¥25、90%≈¥26.6）", "date": "2026-10-22", "to_calibrate": true },
+        "protein": { "source": "产品规格典型值", "date": "2026-10-22", "to_calibrate": true },
+        "aa": { "source": "文献典型值", "date": "2026-10-22", "to_calibrate": true }
+      }
+    },
+    {
+      "key": "rice",
+      "name": { "zh": "大米蛋白", "en": "Rice protein" },
+      "price_cny_per_kg": "20",
+      "protein_fraction": "0.8",
+      "aa_mg_per_g_protein": { "his": "24", "ile": "40", "leu": "82", "lys": "38", "saa": "43", "aaa": "95", "thr": "34", "trp": "13", "val": "56" },
+      "cap_g_per_100g": "30",
+      "cap_reason": { "zh": "供应与口感（占位约束）", "en": "Supply & mouthfeel (placeholder)" },
+      "provenance": {
+        "price": { "source": "阿里国际站 ¥19.98 起订", "date": "2026-10-22", "to_calibrate": true },
+        "protein": { "source": "产品规格典型值", "date": "2026-10-22", "to_calibrate": true },
+        "aa": { "source": "文献典型值", "date": "2026-10-22", "to_calibrate": true }
+      }
+    },
+    {
+      "key": "lys_hcl",
+      "name": { "zh": "L-赖氨酸盐酸盐 98.5%", "en": "L-Lysine·HCl 98.5%" },
+      "price_cny_per_kg": "9.1",
+      "is_crystal": true,
+      "purity": "0.985",
+      "free_base_fraction": "14619/18265",
+      "free_base_note": { "zh": "Lys·HCl 游离碱基占比 = 146.19/182.65 ≈ 0.8004（晶体供 Lys = 质量×纯度×0.8004）", "en": "Free-base share of Lys·HCl = 146.19/182.65 ≈ 0.8004 (crystal Lys supply = mass × purity × 0.8004)" },
+      "supplies_aa": "lys",
+      "provenance": { "price": { "source": "Mysteel 辽宁报价 9100 元/吨（饲料级锚，食品级需核价）", "date": "2026-08-09", "to_calibrate": true } }
+    },
+    {
+      "key": "dl_met",
+      "name": { "zh": "DL-蛋氨酸 99%", "en": "DL-Methionine 99%" },
+      "price_cny_per_kg": "23.5",
+      "is_crystal": true,
+      "purity": "0.99",
+      "free_base_fraction": "1",
+      "supplies_aa": "saa",
+      "provenance": { "price": { "source": "嘉博智汇京津冀 23.2–23.8（年内 4 月高约 52、6 月 38–41、10 月回落；GB 14880 对 DL 消旋体法规核查是生产级前置项）", "date": "2026-10-08", "to_calibrate": true } }
+    },
+    {
+      "key": "l_thr",
+      "name": { "zh": "L-苏氨酸 98.5%", "en": "L-Threonine 98.5%" },
+      "price_cny_per_kg": "9.7",
+      "is_crystal": true,
+      "purity": "0.985",
+      "free_base_fraction": "1",
+      "supplies_aa": "thr",
+      "provenance": { "price": { "source": "Mysteel 9700 元/吨（发酵网 2026-03 报 9.45）", "date": "2026-08-09", "to_calibrate": true } }
+    },
+    {
+      "key": "maltodextrin",
+      "name": { "zh": "麦芽糊精载体", "en": "Maltodextrin carrier" },
+      "price_cny_per_kg": "4",
+      "protein_fraction": "0",
+      "provenance": { "price": { "source": "大宗常识口径（演示级占位）", "date": "2026-10-22", "to_calibrate": true } }
+    }
+  ],
+  "patterns": {
+    "adult": {
+      "name": { "zh": "FAO 2013 成人模式", "en": "FAO 2013 adult pattern" },
+      "mg_per_g_protein": { "his": "15", "ile": "30", "leu": "59", "lys": "45", "saa": "22", "aaa": "38", "thr": "23", "trp": "6", "val": "39" },
+      "provenance": { "source": "FAO 2013 Dietary Protein Quality Evaluation（转引，演示级）", "to_calibrate": true }
+    },
+    "preschool": {
+      "name": { "zh": "FAO 2013 学龄前模式", "en": "FAO 2013 preschool pattern" },
+      "mg_per_g_protein": { "his": "20", "ile": "32", "leu": "66", "lys": "57", "saa": "31", "aaa": "52", "thr": "34", "trp": "11", "val": "43" },
+      "provenance": { "source": "FAO 2013（转引；年龄口径二手——6 月龄–3 岁与 3–10 岁表述不一，待核对 FAO 原报告）", "to_calibrate": true }
+    }
+  },
+  "diaas": {
+    "demand_multiplier": "1.1",
+    "note": { "zh": "DIAAS 口径＝参考模式×1.1，统一代理 90% 消化率折损（粗代理）；真实分项真回肠消化率区间：SPI 0.91–0.98、豌豆 0.82–0.92、大米 0.90–0.97——v0.2/v0.3 任务换分项消化率。", "en": "DIAAS mode = pattern × 1.1 as a flat proxy for 90% digestibility (rough); true ileal digestibility ranges: SPI 0.91–0.98, pea 0.82–0.92, rice 0.90–0.97 — per-ingredient digestibility is a v0.2/v0.3 task." }
+  },
+  "rhs": {
+    "total_g": "100",
+    "protein_g": "80",
+    "crystal_cap_g": "4"
+  },
+  "rhs_provenance": {
+    "protein": { "source": "算例设定：80g 蛋白/100g 产品（对标高蛋白声称口径）", "to_calibrate": false },
+    "crystal_cap": { "source": "干净标签占位上限", "to_calibrate": true }
+  },
+  "scenarios": [
+    { "key": "s0", "name": { "zh": "S0 纯 SPI 基线", "en": "S0 pure-SPI baseline" }, "pattern": null, "diaas": false, "caps": false, "crystals": true, "note": { "zh": "只用蛋白约束，无口感上限、无氨基酸约束", "en": "Protein constraint only; no sensory caps, no AA constraints" } },
+    { "key": "s1", "name": { "zh": "S1 成人全等价", "en": "S1 adult full equivalence" }, "pattern": "adult", "diaas": false, "caps": true, "crystals": true, "note": { "zh": "9 项 AAS ≥1（成人模式）＋口感上限，晶体可用", "en": "9 AAS ≥ 1 (adult) + sensory caps, crystals allowed" } },
+    { "key": "s2", "name": { "zh": "S2 幼儿级全等价（AAS）", "en": "S2 preschool full equivalence (AAS)" }, "pattern": "preschool", "diaas": false, "caps": true, "crystals": true, "note": { "zh": "9 项 AAS ≥1（学龄前模式）", "en": "9 AAS ≥ 1 (preschool pattern)" } },
+    { "key": "s2b", "name": { "zh": "S2′ 幼儿级·禁晶体", "en": "S2′ preschool, no crystals" }, "pattern": "preschool", "diaas": false, "caps": true, "crystals": false, "note": { "zh": "纯植物互补独立达成幼儿级", "en": "Plant complementarity alone reaches preschool level" } },
+    { "key": "s3", "name": { "zh": "S3 幼儿级·DIAAS 口径", "en": "S3 preschool, DIAAS mode" }, "pattern": "preschool", "diaas": true, "caps": true, "crystals": true, "note": { "zh": "模式×1.1（消化率折损代理），晶体氨基酸进场", "en": "Pattern × 1.1 (digestibility proxy), crystal AAs enter" } },
+    { "key": "s3b", "name": { "zh": "S3′ 幼儿级·DIAAS·禁晶体", "en": "S3′ preschool, DIAAS, no crystals" }, "pattern": "preschool", "diaas": true, "caps": true, "crystals": false, "note": { "zh": "口感上限内 DIAAS 离开晶体不可达（预期无可行解）", "en": "DIAAS unreachable without crystals within sensory caps (expected infeasible)" } }
+  ],
+  "unit_conversions": {
+    "protein_kg_per_100g": "0.08",
+    "per_100g_to_per_ton": "10000",
+    "li_per_cny": "1000"
+  },
+  "sensitivity_presets": [
+    { "key": "met_surge", "label": { "zh": "蛋氨酸暴涨 23.5→52 元/kg", "en": "Met price surge 23.5→52 CNY/kg" }, "overrides": { "dl_met": "52" }, "note": { "zh": "S2 不用 Met 不受影响；S3 价签仅 +2.4 厘/100g", "en": "S2 uses no Met; S3 price tag moves only +0.24 fen (2.4 li)/100 g" } },
+    { "key": "tonnage", "label": { "zh": "吨级采购 豌豆/大米 20→15 元/kg", "en": "Tonnage purchasing: pea/rice 20→15 CNY/kg" }, "overrides": { "pea": "15", "rice": "15" }, "note": { "zh": "S2 降至 ≈¥15.49/kg 产品，进入 ¥15/kg 带", "en": "S2 drops to ≈ ¥15.49/kg product" } }
+  ]
+}

@@ -1,0 +1,17 @@
+NOTICE — licensing by layer（分层许可声明）
+
+1. Code & method（代码与方法层）: MIT — see LICENSE.
+   Applies to src/, tests/, index.html, docs/.
+
+2. Data snapshots（数据快照层）: CC-BY 4.0 — https://creativecommons.org/licenses/by/4.0/
+   Applies to data/*.json (coefficient tables with provenance labels).
+   Attribution: Yuxuan Long, "LP 食品配方演示器" (lp-food-demo), 2026.
+   当你复用 data/ 中的系数、价格与氨基酸矩阵时，请随附来源与检索日期标签，
+   并保留 "演示级（demo-grade）" 标记——这些数字只能用于方向与量级讨论，不可当商业报价。
+
+3. Third-party facts cited inside data files（数据文件内引用的外部事实）:
+   价格锚来自公开渠道（ChemicalBook / 1688 / 阿里国际站 / Mysteel / 嘉博智汇 /
+   大宗常识口径），检索日期 2026-10-22，详见各字段的 provenance 标签。
+   FAO 2013 氨基酸参考模式为 FAO 公开出版物数值的转引（演示级，二手）。
+
+此文件即 NOTICE；修改分层条款时须同步修改 README「许可」一节。

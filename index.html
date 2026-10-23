@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LP 食品配方演示器 · LP Food Formulation Demo</title>
+<meta name="description" content="同一 LP 引擎的两个出口：方便面调料包减钠与植物蛋白混配。精确有理数单纯形，零依赖，每个数字可复算。演示级。">
+<style>
+:root {
+  --bg: #f7f7f4; --card: #ffffff; --ink: #1f2328; --mut: #6a737d;
+  --line: #e4e6e9; --acc: #0f6b4f; --acc2: #eef6f2;
+  --red: #c93a3a; --amber: #b26a00; --green: #1a7f37;
+  --badge-demo-bg: #fdf3e3; --badge-demo-ink: #8a5a00;
+  --shadow: 0 1px 3px rgba(30,34,40,.07);
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171a; --card: #1d2126; --ink: #e6e8ea; --mut: #98a0a8;
+    --line: #30363d; --acc: #4ecf9a; --acc2: #1c2b25;
+    --red: #f08a8a; --amber: #e0a94f; --green: #6fd68f;
+    --badge-demo-bg: #33290f; --badge-demo-ink: #e0b45f;
+    --shadow: 0 1px 3px rgba(0,0,0,.4);
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.65 -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 24px 20px 80px; }
+a { color: var(--acc); }
+
+header.hd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+h1 { font-size: 24px; margin: 0; letter-spacing: .2px; }
+.badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  background: var(--badge-demo-bg); color: var(--badge-demo-ink); vertical-align: middle; }
+.langbtn { margin-left: auto; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  border-radius: 8px; padding: 5px 14px; font-size: 13px; cursor: pointer; }
+.langbtn:hover { border-color: var(--acc); }
+.sub { color: var(--mut); font-size: 13.5px; margin: 4px 0 18px; }
+
+nav.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+nav.tabs button { border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  padding: 8px 16px; border-radius: 10px; font-size: 14px; cursor: pointer; }
+nav.tabs button.act { background: var(--acc); border-color: var(--acc); color: #fff; }
+@media (prefers-color-scheme: dark) { nav.tabs button.act { color: #10201a; } }
+
+.grid { display: grid; gap: 14px; }
+.g2c { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.g3c { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow); }
+.card h3 { margin: 0 0 10px; font-size: 15px; }
+.card .note { color: var(--mut); font-size: 12.5px; margin-top: 8px; }
+.kv { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px dashed var(--line); font-size: 14px; }
+.kv:last-of-type { border-bottom: none; }
+.kv b { font-family: var(--mono); font-weight: 600; }
+.big { font-size: 22px; font-family: var(--mono); font-weight: 600; }
+.pos { color: var(--red); }
+.zero { color: var(--green); }
+.tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--mut); white-space: nowrap; }
+.tag.warn { border-color: var(--amber); color: var(--amber); }
+.tag.ok { border-color: var(--green); color: var(--green); }
+.tag.demo { background: var(--badge-demo-bg); color: var(--badge-demo-ink); border: none; }
+
+.ctrl label { display: block; font-size: 13px; color: var(--mut); margin: 10px 0 2px; }
+.ctrl .val { font-family: var(--mono); color: var(--ink); font-weight: 600; }
+input[type=range] { width: 100%; accent-color: var(--acc); }
+.row2 { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+button.small { border: 1px solid var(--line); background: var(--card); color: var(--ink);
+  border-radius: 8px; padding: 4px 12px; font-size: 13px; cursor: pointer; }
+button.small:hover, button.small.act { border-color: var(--acc); color: var(--acc); }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th { text-align: left; color: var(--mut); font-weight: 500; font-size: 12.5px; padding: 4px 8px 6px 0; border-bottom: 1px solid var(--line); }
+td { padding: 4px 8px 4px 0; border-bottom: 1px dashed var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+td.num, th.num { text-align: right; font-family: var(--mono); }
+td.num { white-space: nowrap; }
+.mono { font-family: var(--mono); }
+
+.bar { position: relative; background: color-mix(in srgb, var(--line) 55%, transparent); border-radius: 4px; height: 8px; min-width: 90px; }
+.bar i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: var(--green); }
+.bar i.warn { background: var(--amber); }
+.bar i.bad { background: var(--red); }
+
+.warnbox { border-color: var(--red); }
+.warnbox h3 { color: var(--red); }
+.prov details { margin-top: 2px; }
+.prov summary { cursor: pointer; color: var(--mut); font-size: 12px; list-style: none; }
+.prov summary::before { content: "ⓘ "; }
+.prov details div { font-size: 12px; color: var(--mut); padding: 2px 0 4px 14px; }
+details.pop { position: relative; width: 22px; flex: none; }
+details.pop > summary { padding: 0 2px; }
+details.pop > div { position: absolute; left: 0; top: 100%; z-index: 6; width: max-content; max-width: 320px;
+  background: var(--card); color: var(--mut); border: 1px solid var(--line); border-radius: 8px;
+  padding: 6px 10px; box-shadow: var(--shadow); }
+figure { margin: 0; }
+figcaption { color: var(--mut); font-size: 12.5px; margin-top: 6px; }
+svg text { font-family: -apple-system, "PingFang SC", sans-serif; }
+svg .tt { font-size: 12px; fill: var(--ink); }
+svg .ts { font-size: 11px; fill: var(--mut); }
+
+footer { margin-top: 28px; padding: 14px 18px; border: 1px dashed var(--line); border-radius: 12px;
+  color: var(--mut); font-size: 12.5px; }
+footer p { margin: 4px 0; }
+body[data-lang="zh"] .en { display: none; }
+body[data-lang="en"] .zh { display: none; }
+.caliber p { margin: 6px 0; }
+.caliber li { margin: 4px 0; }
+section { display: none; }
+section.act { display: block; }
+</style>
+</head>
+<body data-lang="zh">
+<div class="wrap">
+
+<header>
+  <div class="hd">
+    <h1><span class="zh">LP 食品配方演示器</span><span class="en">LP Food Formulation Demo</span></h1>
+    <span class="badge">v0.1.0 · <span class="zh">演示级</span><span class="en">DEMO-GRADE</span></span>
+    <button class="langbtn" id="langbtn">EN</button>
+  </div>
+  <p class="sub"><span class="zh">同一引擎的两个出口：G1 方便面调料包减钠 ＋ G2 植物蛋白混配 · 精确有理数单纯形 · 零依赖 · 每个数字可复算（tests/ 12 项断言锚定全部已审计数字）</span><span class="en">Two outlets of one engine: G1 seasoning-pack sodium reduction + G2 plant-protein blending · exact rational simplex · zero dependencies · every number reproducible (12 test assertions anchored to all audited figures)</span></p>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="g1" class="act">G1 · <span class="zh">减钠</span><span class="en">Sodium</span></button>
+  <button data-tab="g2">G2 · <span class="zh">蛋白</span><span class="en">Protein</span></button>
+  <button data-tab="caliber"><span class="zh">口径三件套与免责</span><span class="en">Caliber &amp; Disclaimer</span></button>
+</nav>
+
+<!-- ============ G1 ============ -->
+<section id="sec-g1" class="act">
+  <div class="grid g2c">
+    <div class="card ctrl">
+      <h3 data-t="g1.ctrl"></h3>
+      <label><span data-t="g1.ncap"></span>：<span class="val" id="v-ncap"></span></label>
+      <input type="range" id="in-ncap" min="2608" max="4716" step="8" value="2608">
+      <label><span data-t="g1.kclPrice"></span>：<span class="val" id="v-kclp"></span></label>
+      <input type="range" id="in-kclp" min="2" max="30" step="0.5" value="10">
+      <label><span data-t="g1.kclSalt"></span>：<span class="val" id="v-kcls"></span></label>
+      <input type="range" id="in-kcls" min="0.5" max="0.95" step="0.01" value="0.75">
+      <div style="margin-top:12px"><button class="small" id="g1-reset" data-t="g1.reset"></button></div>
+      <p class="note zh">咸度等效系数与 KCl 价格均为「待标定」文献/示意系数——调滑杆即重解（精确分数，非查表）。</p>
+      <p class="note en">Saltiness coefficient and KCl price are to-be-calibrated literature/placeholder values — moving a slider re-solves exactly (rational arithmetic, not a lookup table).</p>
+    </div>
+    <div class="card">
+      <h3 data-t="g1.recipe"></h3>
+      <table id="g1-recipe"></table>
+      <p class="note" id="g1-binding"></p>
+    </div>
+    <div class="card">
+      <h3 data-t="g1.cost"></h3>
+      <div class="kv"><span data-t="u.per100g"></span><b id="g1-c100"></b></div>
+      <div class="kv"><span data-t="u.perton"></span><b id="g1-cton"></b></div>
+      <div class="kv"><span data-t="u.li"></span><b id="g1-cpkt"></b></div>
+      <div class="kv" style="margin-top:6px"><span data-t="g1.sodium"></span><b id="g1-na"></b></div>
+      <div class="kv"><span data-t="g1.shadow"></span><b id="g1-shadow"></b></div>
+      <p class="note" data-t="g1.shadow.note"></p>
+    </div>
+    <div class="card" id="g1-infeasible" style="display:none">
+      <h3 style="color:var(--red)" data-t="g1.infeasible.title"></h3>
+      <p class="note" data-t="g1.infeasible.body" style="font-size:13.5px;color:var(--ink)"></p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3 data-t="g1.dual.title"></h3>
+    <div class="grid g2c">
+      <div>
+        <p class="note" style="margin:0 0 4px" data-t="g1.dual.lp"></p>
+        <div class="big pos" id="g1-dual-lp"></div>
+        <div class="kv" style="border:none"><span data-t="g1.dual.packet"></span><b id="g1-dual-lp-p"></b></div>
+      </div>
+      <div>
+        <p class="note" style="margin:0 0 4px" data-t="g1.dual.pure"></p>
+        <div class="big pos" id="g1-dual-pure"></div>
+        <div class="kv" style="border:none"><span data-t="g1.dual.packet"></span><b id="g1-dual-pure-p"></b></div>
+      </div>
+    </div>
+    <p class="note zh">口径：100g 调味料 LP 精确求解；按 8g 方便面调料包折算；数字为当前滑杆参数下的实时值（默认参数＝审计口径：+¥576 / +¥764 每吨 ≈ 4.6 / 6.1 厘/包）。</p>
+    <p class="note en">Caliber: exact LP solve per 100g seasoning; converted to 8g packets; values are live under current slider parameters (defaults = audited caliber: +¥576 / +¥764 per ton ≈ 4.6 / 6.1 li per packet).</p>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3 data-t="g1.ladder"></h3>
+    <figure><div id="g1-ladder-svg"></div>
+    <figcaption><span data-t="g1.ladder.cap"></span></figcaption></figure>
+  </div>
+
+  <div class="grid g2c" style="margin-top:14px">
+    <div class="card">
+      <h3 data-t="g1.onex6"></h3>
+      <div class="row2" id="onex6-list"></div>
+      <p class="note zh">GB 28050「1+6」强制标示的营养素集：钠为已验证主约束（本页可解），其余六项以占位系数入 schema——演示多目标/ε-约束的数学形状，不伪造精度。约束 schema 见 src/models.js。</p>
+      <p class="note en">GB 28050's "1+6" mandatory nutrients: sodium is the verified primary constraint (solvable here); the other six sit in the schema as placeholders — demonstrating the multi-objective / ε-constraint shape without fabricating precision.</p>
+    </div>
+    <div class="card prov">
+      <h3 data-t="g1.prov"></h3>
+      <div id="g1-prov"></div>
+      <p class="note" data-t="u.provnote"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ G2 ============ -->
+<section id="sec-g2">
+  <div class="card">
+    <h3 data-t="g2.scenario"></h3>
+    <div class="row2" id="g2-scenarios"></div>
+  </div>
+  <div class="grid g2c" style="margin-top:14px">
+    <div class="card ctrl">
+      <h3 data-t="g2.prices"></h3>
+      <div id="g2-prices"></div>
+      <h3 style="margin-top:14px" data-t="g2.preset"></h3>
+      <div class="row2" id="g2-presets"></div>
+    </div>
+    <div class="card">
+      <h3 data-t="g2.recipe"></h3>
+      <table id="g2-recipe"></table>
+    </div>
+    <div class="card">
+      <h3 data-t="g2.cost"></h3>
+      <div class="kv"><span data-t="u.per100g"></span><b id="g2-c100"></b></div>
+      <div class="kv"><span data-t="u.perkg"></span><b id="g2-ckg"></b></div>
+      <div class="kv"><span data-t="g2.foldprot"></span><b id="g2-cprot"></b></div>
+      <div class="kv" style="margin-top:6px"><span data-t="g2.protein"></span><b id="g2-prot"></b></div>
+      <div class="kv"><span data-t="g2.crystal"></span><b id="g2-cry"></b></div>
+      <p class="note zh">原料下界，未计风味/工艺/包装（BOM 含这些——对照蛋白棒 BOM ¥20–25/kg）。价格锚全部带来源与日期，见右侧溯源。</p>
+      <p class="note en">Raw-material lower bound; flavour/process/packaging excluded (compare protein-bar BOM ¥20–25/kg). All price anchors carry source and date — see provenance.</p>
+    </div>
+    <div class="card" id="g2-infeasible" style="display:none">
+      <h3 style="color:var(--red)" data-t="g2.infeasible.title"></h3>
+      <p class="note" data-t="g2.infeasible.body" style="font-size:13.5px;color:var(--ink)"></p>
+    </div>
+  </div>
+
+  <div class="grid g2c" style="margin-top:14px">
+    <div class="card">
+      <h3 data-t="g2.aa"></h3>
+      <table id="g2-aa"></table>
+    </div>
+    <div class="card">
+      <h3 data-t="g2.diffs"></h3>
+      <div class="kv"><span data-t="g2.diff.free"></span><b class="zero" id="g2-d-free"></b></div>
+      <div class="kv"><span data-t="g2.diff.diaas"></span><b class="pos" id="g2-d-diaas"></b></div>
+      <div class="kv"><span data-t="g2.diff.sens"></span><b class="pos" id="g2-d-sens"></b></div>
+      <p class="note" data-t="g2.diff.ratio"></p>
+    </div>
+  </div>
+
+  <div class="card prov" style="margin-top:14px">
+    <h3 data-t="g2.prov"></h3>
+    <div id="g2-prov"></div>
+    <p class="note" data-t="u.provnote"></p>
+  </div>
+</section>
+
+<!-- ============ 口径 ============ -->
+<section id="sec-caliber" class="caliber">
+  <div class="grid g2c">
+    <div class="card">
+      <h3><span class="zh">口径纪律三件套</span><span class="en">The Caliber-Discipline Trio</span></h3>
+      <p class="zh">本演示器把库内《00-个人战略》对 W1–2 的口径要求产品化，三件全部内置：</p>
+      <p class="en">This demo productizes the caliber requirements the strategy places on W1–2; all three are built in:</p>
+      <ol>
+        <li><span class="zh">每个系数字段带「来源＋日期＋待标定」溯源标签，并按</span><span class="en">Every coefficient field carries a source+date+to-be-calibrated provenance label, with</span> <strong>演示级/生产级</strong> <span class="zh">证据分级：演示级＝文献系数＋n=8–12 小样本自测（只作方向信号）；生产级＝专业感官 panel ≥30 人或校企数据。</span><span class="en">evidence grading: demo-grade = literature coefficients + small-sample self-tests (direction only); production-grade = professional sensory panel ≥30 or industry-academia data.</span></li>
+        <li><span class="zh">对外成本数字</span><span class="en">External cost figures use</span> <strong><span class="zh">双基准并报</span><span class="en">dual-baseline reporting</span></strong> <span class="zh">（G1 页）＋示意价格口径随附（两页皆是）。</span><span class="en">(G1 page) + illustrative-price caliber attached (both pages).</span></li>
+        <li><span class="zh">敏感性滑杆（KCl 价格、咸度等效系数、G2 原料价格）——LP 三件武器之三的产品化。</span><span class="en">Sensitivity sliders (KCl price, saltiness coefficient, G2 ingredient prices) — the third of the LP weapons, productized.</span></li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3><span class="zh">诚实体检与对账</span><span class="en">Honesty Checks &amp; Reconciliation</span></h3>
+      <p class="zh">页面所有数字由本仓库求解器<strong>实时精确计算</strong>（BigInt 分数单纯形），不由文档数字硬编码；tests/verify.test.mjs 以 12 项断言锚定战略文档 §一仪表盘与 §十一重验表的全部关键数字。两处已知文档口径差异（复算优先、差异留痕）：</p>
+      <p class="en">Every figure on this page is <strong>computed live and exactly</strong> (BigInt rational simplex), never hard-coded from the documents; tests/verify.test.mjs anchors all key figures of the strategy dashboard with 12 assertions. Two known document discrepancies (recomputation wins, trail preserved):</p>
+      <ol>
+        <li><span class="zh">G2 算例 S1 行「全部 9 项 ≥1.31」：按系数表精确复算最小项为 Lys ≈ 1.238（1.31 恰为 Val 值，疑非 min 口径）。</span><span class="en">G2 case S1 "all nine ≥1.31": exact recomputation gives min = Lys ≈ 1.238 (1.31 happens to be Val's value; likely not the min).</span></li>
+        <li><span class="zh">G1 影子价格体检表首段 27.6：精确值为 161/5895000 ≈ ¥27.31/吨·100mg（27.6 由表内四舍五入成本放大所致）；对外口径沿用「¥27，区间 27.2–27.6」。</span><span class="en">G1 shadow price first segment 27.6 in the audit table: exact value 161/5895000 ≈ ¥27.31/ton·100mg (27.6 came from rounding in the table); external wording stays "¥27, range 27.2–27.6".</span></li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3><span class="zh">方法与可复算性</span><span class="en">Method &amp; Reproducibility</span></h3>
+      <p><span class="zh">求解器：两阶段单纯形法，Bland 规则防循环，全程 BigInt 精确分数（与原算例 Python fractions 同口径），影子价格从终局基的对偶读出并与中心差分交叉验证。零第三方依赖、零构建步骤。</span><span class="en">Solver: two-phase simplex with Bland's rule, exact BigInt rationals throughout (same caliber as the original Python-fractions case), shadow prices read from the final basis duals and cross-checked with central differences. Zero third-party dependencies, zero build steps.</span></p>
+      <p class="mono" style="font-size:13px">node --test tests/verify.test.mjs　→　12 pass</p>
+    </div>
+    <div class="card">
+      <h3><span class="zh">免责声明</span><span class="en">Disclaimer</span></h3>
+      <p><span class="zh">本工具与全部数字均为<strong>演示级</strong>：文献/示意系数＋精确求解，只能用于讨论方向与量级，<strong>不构成营养或医疗建议，不可当商业报价</strong>。价格锚为 2026-10-22 检索的公开渠道口径，会随市场变动。宣称只走营养成分声称通道（GB 28050），不作疾病预防/治疗功能宣称。发现错误请开 issue——公开更正，留痕处理。</span><span class="en">This tool and all its figures are <strong>demo-grade</strong>: literature/placeholder coefficients + exact solving; for direction and magnitude discussion only, <strong>not nutritional or medical advice, not a commercial quotation</strong>. Price anchors were retrieved 2026-10-22 from public channels and change with markets. Claims go only through the nutrient-content channel (GB 28050); no disease-prevention/treatment claims. Found an error? Open an issue — public correction, trail preserved.</span></p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p><span class="zh">代码与方法层 MIT、数据快照 CC-BY 4.0（见 LICENSE / NOTICE）· 复用数据请随附来源与「演示级」标记 ·</span><span class="en">Code &amp; method under MIT, data snapshots under CC-BY 4.0 (see LICENSE / NOTICE) · reuse data with source + demo-grade label attached ·</span>
+  <a href="https://github.com/YuxuanLongBeyond/lp-food-demo">GitHub</a></p>
+  <p><span class="zh">模型正本：《LP配方与食品健康转型全方面调研》§3.2–3.3（G1）、《G2蛋白混配LP算例》（G2）· 数据日期 2026-10-22 · 2026-10-23 发布 v0.1.0（W1–2 交付物）</span><span class="en">Model sources: LP Formulation Survey §3.2–3.3 (G1), G2 Protein-Blending LP Case (G2) · data dated 2026-10-22 · v0.1.0 released 2026-10-23 (W1–2 deliverable)</span></p>
+</footer>
+
+</div>
+<script type="module" src="src/ui.js"></script>
+</body>
+</html>

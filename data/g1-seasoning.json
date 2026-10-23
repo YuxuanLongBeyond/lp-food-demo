@@ -1,0 +1,125 @@
+{
+  "id": "g1-seasoning",
+  "grade": "demo",
+  "grade_note": {
+    "zh": "演示级：文献/示意系数＋精确 LP 求解。对外只能讲方向与量级，不可当商业报价。",
+    "en": "Demo-grade: literature/placeholder coefficients + exact LP solve. Direction and magnitude only, not a commercial quotation."
+  },
+  "product": {
+    "zh": "100g 方便面调料包（示意品类）",
+    "en": "100 g instant-noodle seasoning packet (illustrative category)"
+  },
+  "source_doc": {
+    "zh": "《LP配方与食品健康转型全方面调研》§3.2–3.3（2026-10-22，精确分数顶点求解；本演示器用精确有理数单纯形独立复算）",
+    "en": "LP Formulation & Food-Health Transition Survey §3.2–3.3 (2026-10-22, exact rational vertex enumeration; this demo independently re-solves with exact rational simplex)"
+  },
+  "variables": [
+    {
+      "key": "nacl",
+      "name": { "zh": "食盐 NaCl", "en": "Salt (NaCl)" },
+      "price_cny_per_kg": "1.6",
+      "sodium_mg_per_g": "393",
+      "saltiness_eq": "1",
+      "umami_eq": "0",
+      "provenance": {
+        "price": { "source": "示意口径，接近 1688 食品级批发价", "date": "2026-10-22", "to_calibrate": true },
+        "sodium": { "source": "化学计量：Na 22.99/58.44 ≈ 39.3% → 393 mg/g", "date": "2026-10-22", "to_calibrate": false },
+        "saltiness": { "source": "定义基准（咸度系数=1）", "date": "2026-10-22", "to_calibrate": true }
+      }
+    },
+    {
+      "key": "kcl",
+      "name": { "zh": "氯化钾 KCl（代盐）", "en": "Potassium chloride (salt substitute)" },
+      "price_cny_per_kg": "10",
+      "sodium_mg_per_g": "0",
+      "saltiness_eq": "0.75",
+      "umami_eq": "0",
+      "provenance": {
+        "price": { "source": "示意口径，接近 1688 食品级批发价", "date": "2026-10-22", "to_calibrate": true },
+        "saltiness": { "source": "文献典型值（咸度等效约 0.6–0.8 取 0.75）", "date": "2026-10-22", "to_calibrate": true }
+      }
+    },
+    {
+      "key": "msg",
+      "name": { "zh": "味精 MSG（谷氨酸钠）", "en": "MSG (monosodium glutamate)" },
+      "price_cny_per_kg": "9",
+      "sodium_mg_per_g": "125",
+      "saltiness_eq": "0",
+      "umami_eq": "1",
+      "provenance": {
+        "price": { "source": "示意口径，接近 1688 食品级批发价", "date": "2026-10-22", "to_calibrate": true },
+        "sodium": { "source": "示意口径（一水合物理论值约 123 mg/g，取整 125）", "date": "2026-10-22", "to_calibrate": true },
+        "umami": { "source": "定义基准（鲜味系数=1）", "date": "2026-10-22", "to_calibrate": true }
+      }
+    },
+    {
+      "key": "ye",
+      "name": { "zh": "酵母抽提物 YE", "en": "Yeast extract (YE)" },
+      "price_cny_per_kg": "30",
+      "sodium_mg_per_g": "50",
+      "saltiness_eq": "0",
+      "umami_eq": "0.35",
+      "provenance": {
+        "price": { "source": "示意口径，接近 1688 食品级批发价", "date": "2026-10-22", "to_calibrate": true },
+        "sodium": { "source": "文献典型值（产品间离散大）", "date": "2026-10-22", "to_calibrate": true },
+        "umami": { "source": "文献典型值（相对 MSG 等效）", "date": "2026-10-22", "to_calibrate": true }
+      }
+    },
+    {
+      "key": "carrier",
+      "name": { "zh": "惰性载体（麦芽糊精等）", "en": "Inert carrier (maltodextrin etc.)" },
+      "price_cny_per_kg": "3",
+      "sodium_mg_per_g": "0",
+      "saltiness_eq": "0",
+      "umami_eq": "0",
+      "provenance": {
+        "price": { "source": "大宗常识口径（演示级占位）", "date": "2026-10-22", "to_calibrate": true }
+      }
+    }
+  ],
+  "rhs": {
+    "total_g": "100",
+    "saltiness_geq_g": "12",
+    "umami_geq_g": "2",
+    "kcl_cap_g": "8"
+  },
+  "rhs_provenance": {
+    "saltiness": { "source": "对标 12% 纯盐配方的咸度（示意）", "to_calibrate": true },
+    "umami": { "source": "2g MSG 等效鲜味下限（示意）", "to_calibrate": true },
+    "kcl_cap": { "source": "KCl 苦味上限（文献典型 8–10g/100g 取 8；掩蔽剂可放松——技术路线）", "to_calibrate": true }
+  },
+  "baselines": {
+    "pure_salt": {
+      "name": { "zh": "现实纯盐基线（12% 纯盐）", "en": "Pure-salt real-world baseline (12% salt)" },
+      "recipe_g": { "nacl": "12", "carrier": "88" },
+      "sodium_mg_per_100g": "4716",
+      "cost_cny_per_100g": "0.2832"
+    },
+    "note": {
+      "zh": "双基准并报（库纪律）：对 LP 解基线（钠上限 4716 行的最优解，含少量 KCl）与对纯盐基线的代价必须同时报。LP 解基线成本由求解器实时计算（四舍五入前精确值 ≈ 0.30206）。",
+      "en": "Dual-baseline reporting (library discipline): cost deltas vs the LP-solution baseline (optimum at the 4716 cap, includes a little KCl) and vs the pure-salt baseline must be reported together. The LP baseline cost is computed live (exact pre-rounding value ≈ 0.30206)."
+    }
+  },
+  "unit_conversions": {
+    "packet_g": "8",
+    "per_100g_to_per_ton": "10000",
+    "li_per_cny": "1000"
+  },
+  "schema_1plus6": {
+    "zh": "GB 28050「1+6」全约束形状：钠为已验证主约束；能量/蛋白质/脂肪/饱和脂肪/碳水化合物/糖 6 项为结构占位（示意系数·待标定），演示多目标/ε-约束的数学形状，不伪造精度。",
+    "en": "GB 28050 '1+6' full-constraint shape: sodium is the verified primary constraint; energy/protein/fat/saturates/carbohydrate/sugars are structural placeholders (illustrative, to-be-calibrated), demonstrating the multi-objective / ε-constraint shape without fabricating precision.",
+    "placeholders": [
+      { "key": "energy", "name": { "zh": "能量", "en": "Energy" }, "unit": "kJ/100g", "sense": "cap", "status": "placeholder" },
+      { "key": "protein", "name": { "zh": "蛋白质", "en": "Protein" }, "unit": "g/100g", "sense": "floor", "status": "placeholder" },
+      { "key": "fat", "name": { "zh": "脂肪", "en": "Fat" }, "unit": "g/100g", "sense": "cap", "status": "placeholder" },
+      { "key": "satfat", "name": { "zh": "饱和脂肪", "en": "Saturates" }, "unit": "g/100g", "sense": "cap", "status": "placeholder" },
+      { "key": "carb", "name": { "zh": "碳水化合物", "en": "Carbohydrate" }, "unit": "g/100g", "sense": "cap", "status": "placeholder" },
+      { "key": "sugar", "name": { "zh": "糖", "en": "Sugars" }, "unit": "g/100g", "sense": "cap", "status": "placeholder" }
+    ]
+  },
+  "sensitivity": {
+    "kcl_price_cny_per_kg": { "min": "2", "max": "30", "step": "0.5", "default": "10" },
+    "kcl_saltiness_eq": { "min": "0.5", "max": "0.95", "step": "0.01", "default": "0.75" },
+    "note": { "zh": "敏感度武器产品化（三件武器之三）：KCl ¥20/kg 或咸度系数 <0.6 附近成本跳升。", "en": "Sensitivity weapon productized: cost jumps near KCl ¥20/kg or saltiness coefficient < 0.6." }
+  }
+}
