@@ -240,10 +240,16 @@ function renderG1Ladder(current) {
   $('g1-ladder-svg').innerHTML = s;
 }
 
-/** 钠参数化曲线：段端点由 rhsRange 精确给出，折线＋拐点＋段内影子价格标注 */
+/** 钠参数化曲线：段端点由 rhsRange 精确给出，折线＋拐点＋段内影子价格标注。
+ *  曲线固定为标准病种口径；「当前解」标记仅在当前解同口径（标准模式）时绘制——
+ *  病种模式下当前成本不落在这条曲线上，画上去即失真。 */
 function renderG1Curve(current) {
   const segs = g1SodiumSegments(G1DATA, g1Opts({ disease: 'standard' }));
-  if (!segs.length) { $('g1-curve-svg').innerHTML = ''; $('g1-segments').innerHTML = ''; return; }
+  if (!segs.length) {
+    $('g1-curve-svg').innerHTML = `<p class="note">${t('g1.curve.none')}</p>`;
+    $('g1-segments').innerHTML = '';
+    return;
+  }
   const pts = [];
   segs.forEach((sg) => {
     pts.push([sg.hi.toNumber(), sg.costAtHi.toNumber()]);
@@ -268,7 +274,7 @@ function renderG1Curve(current) {
     }
   });
   s += `<text x="${X(xmax)}" y="${H - B + 16}" text-anchor="middle" class="ts">${gram(segs[0].hi, 0)}</text>`;
-  if (current.status === 'optimal') {
+  if (current.status === 'optimal' && state.g1.disease === 'standard') {
     const cx = X(current.ncap.toNumber()), cy = Y(current.costPer100g.toNumber());
     s += `<line x1="${cx}" y1="${T}" x2="${cx}" y2="${H - B}" stroke="var(--acc)" stroke-dasharray="3 4" opacity=".6"/>`;
     s += `<circle cx="${cx}" cy="${cy}" r="5" fill="var(--acc)"/>`;
@@ -326,7 +332,12 @@ function renderG1Prov() {
 
 function g2Opts(extra = {}) { return { scenario: state.g2.scenario, profile: state.g2.profile, priceOverrides: state.g2.prices, ...extra }; }
 
+// G2 两段式渲染：配方/成本/对偶报告同步画（~40ms）；临界点＋质量前沿（v02 约 0.6s）
+// 延后一拍再算——期间显示「计算中」占位，页面先可读。token 作废过期的补算，最新一次总会补全。
+let g2RenderToken = 0;
+
 function renderG2() {
+  const token = ++g2RenderToken;
   const vars = g2Vars();
   const prices = state.g2.prices;
   const all = g2AllScenarios(G2DATA, prices, state.g2.profile);
@@ -423,17 +434,25 @@ function renderG2() {
   $('g2-d-sens').textContent = all.diffs.sensory_dispersion == null ? '—' : `${li(all.diffs.sensory_dispersion)} ≈ ¥${fixed(all.perTon.sensory_dispersion, 0)}/${ton}`;
 
   renderDualReport('g2-dualreport', r, g2ConstraintName);
-  renderBreakpoints('g2-breakpoints', r, vars,
-    (key) => F.from(prices[key] ?? G2DATA.variables.find((v) => v.key === key).price_cny_per_kg),
-    (key, price) => solveG2(G2DATA, g2Opts({ priceOverrides: { ...prices, [key]: price } })));
-  renderG2Frontier(r);
   renderG2Prov();
+
+  // —— 重面板（临界点 ~0.17s、前沿 ~0.4s，v02 档）让出主线程，先让首屏可读 ——
+  $('g2-breakpoints').innerHTML = `<p class="note">${t('u.computing')}</p>`;
+  $('g2-frontier-svg').innerHTML = `<p class="note">${t('u.computing')}</p>`;
+  $('g2-lmax').textContent = '';
+  setTimeout(() => {
+    if (token !== g2RenderToken) return; // 已被更新一次渲染取代
+    renderBreakpoints('g2-breakpoints', r, vars,
+      (key) => F.from(prices[key] ?? G2DATA.variables.find((v) => v.key === key).price_cny_per_kg),
+      (key, price) => solveG2(G2DATA, g2Opts({ priceOverrides: { ...prices, [key]: price }, lpOpts: { light: true } })));
+    setTimeout(() => { if (token === g2RenderToken) renderG2Frontier(r); }, 0);
+  }, 0);
 }
 
 function renderG2Frontier(r) {
   const sc = G2DATA.scenarios.find((s) => s.key === state.g2.scenario);
   if (!sc.pattern || r.status !== 'optimal') { $('g2-frontier-svg').innerHTML = `<p class="note">${sc.pattern ? t('u.infeasible') : t('g2.frontier.none')}</p>`; $('g2-lmax').textContent = ''; return; }
-  const fr = g2QualityFrontier(G2DATA, g2Opts(), 8);
+  const fr = frontierCached();
   const pts = fr.points.filter((p) => p.status === 'optimal').map((p) => [p.lambda.toNumber(), p.cost.toNumber()]);
   if (pts.length < 2) { $('g2-frontier-svg').innerHTML = `<p class="note">${t('u.infeasible')}</p>`; return; }
   const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
@@ -476,15 +495,21 @@ function renderG2Prov() {
 // ———————————————— 全局 ————————————————
 
 function bindEvents() {
-  $('langbtn').addEventListener('click', () => { state.lang = state.lang === 'zh' ? 'en' : 'zh'; applyI18n(); renderAll(); });
+  $('langbtn').addEventListener('click', () => {
+    state.lang = state.lang === 'zh' ? 'en' : 'zh';
+    applyI18n();
+    renderTab(state.tab);                                  // 只重渲当前 tab
+    renderedTabs[state.tab === 'g1' ? 'g2' : 'g1'] = false; // 隐藏 tab 标脏，激活时再渲染
+  });
   document.querySelectorAll('#tabs button').forEach((b) => b.addEventListener('click', () => {
     state.tab = b.dataset.tab;
     document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('act', x === b));
     document.querySelectorAll('section').forEach((s) => s.classList.toggle('act', s.id === `sec-${state.tab}`));
+    if (!renderedTabs[state.tab]) renderTab(state.tab);
   }));
-  $('in-ncap').addEventListener('input', (e) => { state.g1.ncap = Number(e.target.value); renderG1(); });
-  $('in-kclp').addEventListener('input', (e) => { state.g1.kclPrice = Number(e.target.value); renderG1(); });
-  $('in-kcls').addEventListener('input', (e) => { state.g1.kclSaltiness = Number(e.target.value); renderG1(); });
+  $('in-ncap').addEventListener('input', (e) => { state.g1.ncap = Number(e.target.value); scheduleRender(renderG1); });
+  $('in-kclp').addEventListener('input', (e) => { state.g1.kclPrice = Number(e.target.value); scheduleRender(renderG1); });
+  $('in-kcls').addEventListener('input', (e) => { state.g1.kclSaltiness = Number(e.target.value); scheduleRender(renderG1); });
   $('in-palette').addEventListener('change', (e) => { state.g1.palette = e.target.value; renderG1(); });
   $('in-disease').addEventListener('change', (e) => { state.g1.disease = e.target.value; renderG1(); });
   $('in-onex6').addEventListener('change', (e) => { state.g1.onex6 = e.target.value; renderG1(); });
@@ -495,7 +520,30 @@ function bindEvents() {
   });
 }
 
-function renderAll() { renderG1(); renderG2(); applyI18n(); }
+// ———————————————— 渲染调度：懒渲染＋节流 ————————————————
+
+// 只渲染当前 tab；隐藏 tab 首次激活或语言切换失配时才渲染（G2 v02 全套约 0.7s，不该在页面加载时白付）
+const renderedTabs = { g1: false, g2: false };
+function renderTab(tab) { if (tab === 'g1') renderG1(); else renderG2(); renderedTabs[tab] = true; }
+function renderAll() { renderTab(state.tab); }
+
+// rAF 合帧：滑杆 input 高频触发时每帧至多渲染一次（重面板不排队积压）
+const pending = new Set();
+function scheduleRender(fn) {
+  pending.add(fn);
+  if (pending.size > 1) return;
+  requestAnimationFrame(() => { const fns = [...pending]; pending.clear(); fns.forEach((f) => f()); });
+}
+
+// 质量前沿 size-1 记忆化：仅随 情景×数据档×价格 变化，语言切换/重渲染直接复用
+let frontierMemo = null;
+function frontierCached() {
+  const key = `${state.g2.scenario}|${state.g2.profile}|${JSON.stringify(state.g2.prices)}`;
+  if (frontierMemo && frontierMemo.key === key) return frontierMemo.value;
+  const value = g2QualityFrontier(G2DATA, g2Opts(), 8);
+  frontierMemo = { key, value };
+  return value;
+}
 
 async function init() {
   try {

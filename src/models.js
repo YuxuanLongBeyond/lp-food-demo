@@ -333,7 +333,7 @@ function g2Scores(data, sc, recipe, profile) {
 /**
  * @param {object} data data/g2-protein.json (schema 2)
  * @param {{scenario?: string, priceOverrides?: Object<string,string|number>,
- *          profile?: 'v01_typical'|'v02_usda'}} opts
+ *          profile?: 'v01_typical'|'v02_usda', lpOpts?: object}} opts
  */
 export function solveG2(data, opts = {}) {
   const profile = g2Profile(data, opts.profile).key;
@@ -345,8 +345,8 @@ export function solveG2(data, opts = {}) {
   const priceOf = (key) => F.from(overrides[key] !== undefined ? overrides[key] : by[key].price_cny_per_kg);
 
   const problem = g2Problem(data, sc, priceOf, profile);
-  const res = solveLP(problem);
-  if (res.status !== 'optimal') return { ...res, problem, scenario: sc, profile };
+  const res = solveLP(problem, opts.lpOpts);
+  if (res.status !== 'optimal' || !res.x) return { ...res, problem, scenario: sc, profile };
 
   const recipe = {};
   vars.forEach((v, i) => { recipe[v.key] = res.x[i]; });
@@ -425,33 +425,49 @@ export function g2AllScenarios(data, priceOverrides, profile) {
 export function g2QualityFrontier(data, opts = {}, samples = 10) {
   const base = solveG2(data, opts);
   if (base.status !== 'optimal') return { points: [], lambdaMax: null };
-  const withLambda = (lambda) => {
-    const scaled = JSON.parse(JSON.stringify(data));
-    const sc = scaled.scenarios.find((s) => s.key === (opts.scenario || 's0'));
-    if (sc.pattern) {
-      const { def } = g2Profile(scaled, opts.profile);
-      const key = (def && def.pattern_map && def.pattern_map[sc.pattern]) || sc.pattern;
-      const pat = scaled.patterns[key].mg_per_g_protein;
-      for (const aa of scaled.aa_order) pat[aa] = F.from(pat[aa]).mul(lambda).toString();
-    }
-    return solveG2(scaled, opts);
+  // 仅替换被缩放的模式对象（浅层结构拷贝）——不整体深拷贝 data，原对象零改动
+  const sc = data.scenarios.find((s) => s.key === (opts.scenario || 's0'));
+  let scaledData = data, patKey = null;
+  if (sc.pattern) {
+    const { def } = g2Profile(data, opts.profile);
+    patKey = (def && def.pattern_map && def.pattern_map[sc.pattern]) || sc.pattern;
+    const orig = data.patterns[patKey];
+    const scaled = { ...data, patterns: { ...data.patterns, [patKey]: { ...orig, mg_per_g_protein: { ...orig.mg_per_g_protein } } } };
+    scaledData = scaled;
+  }
+  const withLambda = (lambda, lpOpts) => {
+    if (!patKey) return solveG2(data, { ...opts, lpOpts });
+    const pat = scaledData.patterns[patKey].mg_per_g_protein;
+    for (const aa of data.aa_order) pat[aa] = F.from(data.patterns[patKey].mg_per_g_protein[aa]).mul(lambda).toString();
+    return solveG2(scaledData, { ...opts, lpOpts });
   };
-  const feasibleAt = (lambda) => { const r = withLambda(lambda); return r.status === 'optimal'; };
+  // 二分探针只要可行性：直接装配问题走阶段一（feasibilityOnly），跳过阶段二与全部区间导出
+  const overrides = opts.priceOverrides || {};
+  const by = Object.fromEntries(data.variables.map((v) => [v.key, v]));
+  const priceOf = (key) => F.from(overrides[key] !== undefined ? overrides[key] : by[key].price_cny_per_kg);
+  const profileKey = g2Profile(data, opts.profile).key;
+  const feasibleAt = (lambda) => {
+    if (!patKey) return true;
+    const pat = scaledData.patterns[patKey].mg_per_g_protein;
+    for (const aa of data.aa_order) pat[aa] = F.from(data.patterns[patKey].mg_per_g_protein[aa]).mul(lambda).toString();
+    return solveLP(g2Problem(scaledData, sc, priceOf, profileKey), { feasibilityOnly: true }).status === 'optimal';
+  };
   // λmax 二分（精确到 1/512）
   let loL = F.ONE, hiL = F.from(2);
-  if (feasibleAt(hiL)) return { points: sampleRange(F.ONE, hiL, samples, withLambda), lambdaMax: null };
+  if (feasibleAt(hiL)) return { points: sampleRange(F.ONE, hiL, samples, withLambda, base), lambdaMax: null };
   for (let i = 0; i < 9; i++) {
     const mid = loL.add(hiL).div(F.from(2));
     if (feasibleAt(mid)) loL = mid; else hiL = mid;
   }
-  const points = sampleRange(F.ONE, loL, samples, withLambda);
+  const points = sampleRange(F.ONE, loL, samples, withLambda, base);
   return { points, lambdaMax: loL };
 }
-function sampleRange(l0, l1, n, withLambda) {
+function sampleRange(l0, l1, n, withLambda, base) {
   const pts = [];
   for (let i = 0; i <= n; i++) {
     const lam = l0.add(l1.sub(l0).mul(F.from(i)).div(F.from(n)));
-    const r = withLambda(lam);
+    // 采样点只要 成本：light 求解跳过对偶与区间导出；λ=1 即基准情景，直接复用
+    const r = i === 0 && lam.eq(F.ONE) ? base : withLambda(lam, { light: true });
     pts.push({ lambda: lam, status: r.status, cost: r.status === 'optimal' ? r.costPer100g : null });
   }
   return pts;

@@ -17,12 +17,16 @@ import { F } from './fraction.js';
  * @param {{varNames: string[], objective: (string|F)[],
  *          constraints: {name: string, sense: 'le'|'ge'|'eq',
  *                        coeffs: (string|F)[], rhs: string|F}[]}} problem
+ * @param {{feasibilityOnly?: boolean, light?: boolean}} [opts]
+ *   feasibilityOnly — 阶段一即止：只回答可行域是否非空（status='optimal' 即可行，
+ *                     不保证无界检测；x/obj/区间导出全为 null）。供二分探针用。
+ *   light           — 正常两阶段求出 x/obj，但跳过对偶/区间导出（供只需成本的采样点）。
  * @returns {{status: 'optimal'|'infeasible'|'unbounded', x: F[], obj: F,
  *            duals: F[], binding: boolean[], iterations: number,
  *            reducedCosts: F[], alternateOptima: boolean,
  *            rhsRange: {lo: F|null, hi: F|null}[], priceRange: {lo: F|null, hi: F|null}[]}}
  */
-export function solveLP(problem) {
+export function solveLP(problem, opts = {}) {
   const n = problem.varNames.length;
   const c = problem.objective.map(F.from);
   const m = problem.constraints.length;
@@ -143,6 +147,7 @@ export function solveLP(problem) {
   for (let i = 0; i < m; i++) phase1Cost[artBase + i] = F.ONE;
   simplexLoop(phase1Cost, (j) => j < recBase || j >= artBase); // 结构＋松弛＋人工可入基，记录块永不入基
   if (zVal.isPos()) return fail('infeasible', iterations);
+  if (opts.feasibilityOnly) return fail('optimal', iterations); // 只答可行性：阶段一人工和＝0 即可行
 
   // —— 清理仍居基的人工变量（退化 0 值）：找结构/松弛非零列旋转；全零行＝冗余，删除 ——
   // 扫描上限 recBase：记录块列永不入基，否则 B^{-1} 读数被破坏
@@ -172,6 +177,7 @@ export function solveLP(problem) {
   for (let k = 0; k < T.length; k++) if (basis[k] < n) x[basis[k]] = T[k][rhsCol];
   let obj = F.ZERO;
   for (let j = 0; j < n; j++) if (!x[j].isZero()) obj = obj.add(c[j].mul(x[j]));
+  if (opts.light) return { status: 'optimal', x, obj, duals: null, binding: null, iterations, reducedCosts: null, alternateOptima: null, rhsRange: null, priceRange: null };
 
   // 对偶：y_std[i] = Σ_k c2[basis[k]]·T[k][recBase+i]；对原始 b 的灵敏度 = ×mult
   const duals = new Array(m).fill(F.ZERO);
