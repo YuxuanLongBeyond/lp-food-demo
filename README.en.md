@@ -6,7 +6,7 @@ Two outlets of one exact solver: **G1 instant-noodle seasoning-pack sodium reduc
 
 > **DEMO-GRADE**: literature/placeholder coefficients (the v02 profile transcribes authoritative data) + exact solving, for direction and magnitude discussion only. Not nutritional or medical advice; not a commercial quotation. See [caliber & disclaimer](docs/caliber-en.md).
 
-This is the W1–2 deliverable (v0.1.0 / v0.2.0 / v0.2.1, released 2026-10-23) of the personal strategy library "Ten-Year Diet & Health Roadmap" — the strategy's "three LP weapons" (optimality proof / shadow price / sensitivity) productized into an interactive page.
+This is the W1–2 deliverable (v0.1.0 / v0.2.0 / v0.2.1 / v0.2.2, released 2026-10-23) of the personal strategy library "Ten-Year Diet & Health Roadmap" — the strategy's "three LP weapons" (optimality proof / shadow price / sensitivity) productized into an interactive page.
 
 ## Quick start
 

@@ -119,11 +119,38 @@ section.act { display: block; }
 <header>
   <div class="hd">
     <h1><span class="zh">LP 食品配方演示器</span><span class="en">LP Food Formulation Demo</span></h1>
-    <span class="badge">v0.2.1 · <span class="zh">演示级</span><span class="en">DEMO-GRADE</span></span>
+    <span class="badge">v0.2.2 · <span class="zh">演示级</span><span class="en">DEMO-GRADE</span></span>
     <button class="langbtn" id="langbtn">EN</button>
   </div>
-  <p class="sub"><span class="zh">同一引擎的两个出口：G1 调味料减钠（5→12 原料盘）＋ G2 植物蛋白混配（7→10 原料、USDA 逐格）· 精确有理数单纯形＋全约束对偶/临界点/参数化曲线 · 每个数字可复算</span><span class="en">Two outlets of one engine: G1 seasoning sodium reduction (5→12-ingredient palettes) + G2 plant-protein blending (7→10 ingredients, USDA per-cell) · exact rational simplex + full dual reports / breakpoints / parametric curves · every number reproducible</span></p>
+  <p class="sub"><span class="zh">用「线性规划」回答一个问题：<b>在一堆硬性要求下，怎么配料最省钱</b>。两个演示——G1 调味料减钠（5→12 原料盘）＋ G2 植物蛋白混配（7→10 原料、USDA 逐格）· 精确分数算术，每个数字当场可复算</span><span class="en">Linear programming answers one question: <b>given a set of hard requirements, what is the cheapest blend</b>. Two demos — G1 seasoning sodium reduction (5→12-ingredient palettes) + G2 plant-protein blending (7→10 ingredients, USDA per-cell) · exact rational arithmetic, every number reproducible on the spot</span></p>
 </header>
+
+<div class="card" id="howto" style="margin-bottom:18px">
+  <h3><span class="zh">这页在干嘛？——30 秒读懂</span><span class="en">What is this page? — read it in 30 seconds</span></h3>
+  <p style="font-size:13.5px;margin:0 0 2px"><span class="zh">「线性规划（LP）」就是：<b>在一堆硬性要求（够咸、够鲜、营养达标、限量不超…）下，找出成本最低的配料方案</b>。G1＝把方便面调料包的钠降下来，成本还要最低；G2＝把植物蛋白混到营养达标，成本还要最低。页面上的每个数字都是<b>当场用精确分数算出来的</b>（不是查表、不是估算）——拖动任何滑杆、改任何价格，立即重算。</span><span class="en">Linear programming means: <b>given a stack of hard requirements (salty enough, savoury enough, nutrition on target, caps not exceeded…), find the cheapest possible blend</b>. G1 = cut the sodium of an instant-noodle seasoning pack at minimum cost; G2 = blend plant proteins to nutrition targets at minimum cost. Every number on this page is <b>solved on the spot with exact rational arithmetic</b> — not a lookup table, not an estimate; move any slider or price and it re-solves instantly.</span></p>
+  <p style="font-size:13px;color:var(--mut);margin:10px 0 4px"><span class="zh">怎么读下面的表（速查）：</span><span class="en">How to read the tables below (quick guide):</span></p>
+  <ul style="margin:0;padding-left:20px;font-size:13px;color:var(--mut);line-height:1.7">
+    <li><span class="zh"><b>最优配方</b>＝「省钱冠军」组合：满足全部要求、成本最低的用量（表里灰色行＝没被选用）；</span><span class="en"><b>Optimal recipe</b> = the champion-of-cheap blend: the usage meeting every requirement at the lowest cost (grey rows = not used);</span></li>
+    <li><span class="zh"><b>贴线／顶满</b>＝刚好卡死的要求：最省方案正好把它用满，再严一点就得换料或涨价；</span><span class="en"><b>binding</b> = a requirement exactly maxed out: the cheapest plan touches it, any tighter and the recipe or price must change;</span></li>
+    <li><span class="zh"><b>影子价格</b>＝这个要求「值多少钱」：放松 1 个单位能省多少成本（0＝还有富余，不卡成本）；</span><span class="en"><b>shadow price</b> = what the requirement is "worth": how much cost a one-unit relaxation saves (0 = slack remains, it does not bind);</span></li>
+    <li><span class="zh"><b>价格临界点</b>＝涨跌的分水岭：某原料涨过／降到某个价，最省配方就换人；</span><span class="en"><b>price breakpoint</b> = the tipping point: above/below a certain price, the cheapest recipe swaps that ingredient;</span></li>
+    <li><span class="zh"><b>曲线／前沿</b>＝要求强度与最低成本的关系：越陡＝这个要求越贵；</span><span class="en"><b>curves / frontier</b> = requirement strictness vs minimum cost: the steeper, the dearer the requirement;</span></li>
+    <li><span class="zh"><b>待标定</b>＝文献典型值，还没做实验标定——看方向、看量级可以，别当实测值。</span><span class="en"><b>to be calibrated</b> = literature-typical value, not yet experimentally calibrated — fine for direction and magnitude, not measured truth.</span></li>
+  </ul>
+  <details style="margin-top:10px">
+    <summary style="cursor:pointer;color:var(--mut);font-size:12.5px"><span class="zh">更多术语（换料／有效区间／枢转／交替最优／AAS／λmax／晶体氨基酸／精确分数）</span><span class="en">More terms (swap / validity range / pivot / alternate optima / AAS / λmax / crystal AAs / exact rationals)</span></summary>
+    <div style="font-size:12.5px;color:var(--mut);padding:6px 0 0 16px;line-height:1.7">
+      <p style="margin:2px 0"><span class="zh"><b>换料（换基）</b>：最优解从一个顶点跳到相邻顶点，配方里的原料换人——曲线折点、区间端点都是它。</span><span class="en"><b>swap (basis change)</b>: the optimum jumps to a neighbouring vertex and an ingredient is swapped out — curve bends and range endpoints are exactly these.</span></p>
+      <p style="margin:2px 0"><span class="zh"><b>有效区间</b>：影子价格在该区间内保持不变；越过端点就换料、价格跳档。</span><span class="en"><b>validity range</b>: the shadow price stays constant inside it; beyond an endpoint a swap happens and the price changes.</span></p>
+      <p style="margin:2px 0"><span class="zh"><b>枢转</b>：求解算法（单纯形法）的一次迭代步骤；「7 次枢转」＝这次求解走了 7 步。</span><span class="en"><b>pivot</b>: one iteration step of the simplex algorithm; "7 pivots" = the solve took 7 steps.</span></p>
+      <p style="margin:2px 0"><span class="zh"><b>交替最优</b>：最低成本唯一，但有多套同样便宜的配方（等价解，任选其一）。</span><span class="en"><b>alternate optima</b>: the minimum cost is unique but several equally cheap recipes exist (equivalent solutions).</span></p>
+      <p style="margin:2px 0"><span class="zh"><b>AAS（氨基酸评分）</b>：某个必需氨基酸「供给÷需求」；九项中最低的一项决定整条配方的蛋白质量。</span><span class="en"><b>AAS (amino-acid score)</b>: supply ÷ demand for one essential amino acid; the lowest of the nine sets the protein quality of the whole recipe.</span></p>
+      <p style="margin:2px 0"><span class="zh"><b>λmax</b>：九项营养下限还能「整体同乘放大」的最大倍数——这套原料在口感上限内的质量天花板。</span><span class="en"><b>λmax</b>: the largest factor the nine nutrition floors can still be scaled by together — the quality ceiling of these ingredients within the sensory caps.</span></p>
+      <p style="margin:2px 0"><span class="zh"><b>晶体氨基酸</b>：直接添加的游离氨基酸粉（营养上的「捷径」项），算例设 ≤4g 上限。</span><span class="en"><b>crystal amino acids</b>: free amino-acid powders added directly (a nutritional "shortcut"), capped at 4g in the case.</span></p>
+      <p style="margin:2px 0"><span class="zh"><b>精确分数</b>：全 BigInt 分数运算，页面显示的是精确值四舍五入——与浮点求解器可能差在末位，属预期。</span><span class="en"><b>exact rationals</b>: BigInt fraction arithmetic throughout; displayed values are exact values rounded — last-digit differences vs floating-point solvers are expected.</span></p>
+    </div>
+  </details>
+</div>
 
 <nav class="tabs" id="tabs">
   <button data-tab="g1" class="act">G1 · <span class="zh">减钠</span><span class="en">Sodium</span></button>
@@ -162,6 +189,7 @@ section.act { display: block; }
       <div class="kv"><span data-t="u.per100g"></span><b id="g1-c100"></b></div>
       <div class="kv"><span data-t="u.perton"></span><b id="g1-cton"></b></div>
       <div class="kv"><span data-t="u.li"></span><b id="g1-cpkt"></b></div>
+      <p class="note" style="margin-top:6px" data-t="g1.cost.note"></p>
       <div class="kv" style="margin-top:6px"><span data-t="g1.sodium"></span><b id="g1-na"></b></div>
       <div class="kv" id="g1-k-row" style="display:none"><span data-t="g1.potassium"></span><b id="g1-k"></b></div>
       <div class="kv"><span data-t="g1.shadow"></span><b id="g1-shadow"></b></div>
@@ -226,6 +254,7 @@ section.act { display: block; }
     </div>
     <div class="card prov">
       <h3 data-t="g1.prov"></h3>
+      <p class="note" style="margin-top:0" data-t="prov.howto"></p>
       <div id="g1-prov"></div>
       <p class="note" data-t="u.provnote"></p>
     </div>
@@ -254,6 +283,7 @@ section.act { display: block; }
       <h3 data-t="g2.recipe"></h3>
       <p class="note" id="g2-alt" style="color:var(--amber);display:none"></p>
       <table id="g2-recipe"></table>
+      <p class="note" id="g2-binding"></p>
     </div>
     <div class="card">
       <h3 data-t="g2.cost"></h3>
@@ -300,11 +330,12 @@ section.act { display: block; }
   <div class="card" style="margin-top:14px">
     <h3 data-t="g2.frontier"></h3>
     <figure><div id="g2-frontier-svg"></div>
-    <figcaption><span data-t="g2.frontier.cap"></span> <span class="mono" id="g2-lmax"></span></figcaption></figure>
+    <figcaption><span data-t="g2.frontier.cap"></span> <span id="g2-lmax"></span></figcaption></figure>
   </div>
 
   <div class="card prov" style="margin-top:14px">
     <h3 data-t="g2.prov"></h3>
+    <p class="note" style="margin-top:0" data-t="prov.howto"></p>
     <div id="g2-prov"></div>
     <p class="note" data-t="u.provnote"></p>
   </div>
@@ -348,7 +379,7 @@ section.act { display: block; }
 <footer>
   <p><span class="zh">代码与方法层 MIT、数据快照 CC-BY 4.0（见 LICENSE / NOTICE）· 复用数据请随附来源与「演示级」标记 ·</span><span class="en">Code &amp; method under MIT, data snapshots under CC-BY 4.0 (see LICENSE / NOTICE) · reuse data with source + demo-grade label attached ·</span>
   <a href="https://github.com/YuxuanLongBeyond/lp-food-demo">GitHub</a></p>
-  <p><span class="zh">模型正本：《LP配方与食品健康转型全方面调研》§3.2–3.4（G1）、《G2蛋白混配LP算例》（G2）· 数据日期 2026-10-22/23（USDA FDC、FAO 2013 于 10-23 直录） · v0.1.0 2026-10-23 · v0.2.0 2026-10-23 · v0.2.1 2026-10-23</span><span class="en">Model sources: LP Formulation Survey §3.2–3.4 (G1), G2 Protein-Blending LP Case (G2) · data dated 2026-10-22/23 (USDA FDC and FAO 2013 transcribed 10-23) · v0.1.0 2026-10-23 · v0.2.0 2026-10-23 · v0.2.1 2026-10-23</span></p>
+  <p><span class="zh">模型正本：《LP配方与食品健康转型全方面调研》§3.2–3.4（G1）、《G2蛋白混配LP算例》（G2）· 数据日期 2026-10-22/23（USDA FDC、FAO 2013 于 10-23 直录） · v0.1.0 2026-10-23 · v0.2.0 2026-10-23 · v0.2.1 2026-10-23 · v0.2.2 2026-10-23</span><span class="en">Model sources: LP Formulation Survey §3.2–3.4 (G1), G2 Protein-Blending LP Case (G2) · data dated 2026-10-22/23 (USDA FDC and FAO 2013 transcribed 10-23) · v0.1.0 2026-10-23 · v0.2.0 2026-10-23 · v0.2.1 2026-10-23 · v0.2.2 2026-10-23</span></p>
 </footer>
 
 </div>

@@ -74,7 +74,7 @@ function renderDualReport(elId, r, labelFn) {
       <td class="num" style="color:var(--mut)">[${inf(rg.lo, 1)}, ${inf(rg.hi, 1)}]</td></tr>`;
   }).join('');
   const alt = r.alternateOptima ? `<p class="note" style="color:var(--amber)">${t('dr.alt')}</p>` : '';
-  $(elId).innerHTML = `<table><tr><th>${t('dr.constraint')}</th><th class="num">${t('dr.lhs')}</th><th class="num">${t('dr.rhs')}</th><th>${t('dr.status')}</th><th class="num">${t('u.perton')}/unit</th><th class="num">${t('dr.range')}</th></tr>${rows}</table>${alt}<p class="note">${t('dr.note')}</p>`;
+  $(elId).innerHTML = `<table><tr><th>${t('dr.constraint')}</th><th class="num">${t('dr.lhs')}</th><th class="num">${t('dr.rhs')}</th><th>${t('dr.status')}</th><th class="num">${t('dr.dualcol')}</th><th class="num">${t('dr.range')}</th></tr>${rows}</table>${alt}<p class="note">${t('dr.howto')}</p><p class="note" style="margin-top:2px">${t('dr.note')}</p>`;
 }
 
 /** 价格临界点：priceRange 精确区间 ＋ ±ε 复解探针 */
@@ -171,7 +171,7 @@ function renderG1() {
     }).join('');
     $('g1-recipe').innerHTML = `<tr><th></th><th class="num">g/100g</th><th class="num">¥/kg</th><th></th></tr>${rows}`;
     const bindingNames = r.problem.constraints.filter((_, i) => r.binding[i]).map((c) => g1ConstraintName(c.name)).join(' · ');
-    $('g1-binding').textContent = `${t('g1.binding')}：${bindingNames}　|　${t('u.solve')} · ${r.iterations} ${t('u.iter')}`;
+    $('g1-binding').textContent = `${t('g1.binding')}${state.lang === 'zh' ? '：' : ': '}${bindingNames}　|　${t('u.solve')} · ${r.iterations} ${t('u.iter')}`;
 
     $('g1-c100').textContent = `¥${fixed(r.costPer100g)}`;
     $('g1-cton').textContent = `¥${fixed(r.costPerTon, 0)}`;
@@ -394,6 +394,8 @@ function renderG2() {
       <td class="num">${gram(r.recipe[v.key])} g</td>
       <td class="num" style="color:var(--mut)">${fixed(F.from(prices[v.key] ?? v.price_cny_per_kg), 1)}</td></tr>`).join('');
     $('g2-recipe').innerHTML = `<tr><th></th><th class="num">g/100g</th><th class="num">¥/kg</th></tr>${rows}`;
+    const bindingNames = r.problem.constraints.filter((_, i) => r.binding[i]).map((c) => g2ConstraintName(c.name)).join(' · ');
+    $('g2-binding').textContent = `${t('g1.binding')}${state.lang === 'zh' ? '：' : ': '}${bindingNames}　|　${t('u.solve')} · ${r.iterations} ${t('u.iter')}`;
     $('g2-alt').style.display = r.alternateOptima ? '' : 'none';
     $('g2-alt').textContent = r.alternateOptima ? `⚠ ${t('g2.alt')}` : '';
 
@@ -418,8 +420,8 @@ function renderG2() {
           <td class="num">${fixed(s.ratio, 3)}${isBind ? ` · ${t('g2.aa.bind')}` : ''}</td>
           <td><div class="bar"><i class="${isBind ? 'warn' : ''}" style="width:${w}%"></i></div></td></tr>`;
       }).join('');
-      $('g2-aa').innerHTML = `<tr><th></th><th class="num">mg ${t('u.supply')}</th><th class="num">mg ${t('u.demand')}</th><th class="num">AAS</th><th style="width:120px"></th></tr>${rows2}`;
-      $('g2-aa-note').textContent = state.g2.profile === 'v02_usda' ? t('g2.aa.v02note') : '';
+      $('g2-aa').innerHTML = `<tr><th></th><th class="num">${t('u.supply')} mg/100g</th><th class="num">${t('u.demand')} mg/100g</th><th class="num">AAS</th><th style="width:120px"></th></tr>${rows2}`;
+      $('g2-aa-note').textContent = state.g2.profile === 'v02_usda' ? `${t('g2.aa.note')} ${t('g2.aa.v02note')}` : t('g2.aa.note');
     } else {
       $('g2-aa').innerHTML = `<tr><td style="color:var(--mut)">${t('g2.frontier.none')}</td></tr>`;
       $('g2-aa-note').textContent = '';
@@ -467,9 +469,11 @@ function renderG2Frontier(r) {
   pts.forEach((p, i) => { if (i === 0 || i === pts.length - 1) s += `<text x="${X(p[0])}" y="${Y(p[1]) - 10}" text-anchor="middle" class="ts" style="font-family:var(--mono)">¥${p[1].toFixed(4)}</text>`; });
   s += `<text x="${X(xmin)}" y="${H - B + 16}" text-anchor="middle" class="ts">λ=1.00</text>`;
   s += `<text x="${X(xmax)}" y="${H - B + 16}" text-anchor="middle" class="ts" style="fill:var(--red)">λ=${xmax.toFixed(3)}</text>`;
-  s += `<text x="${W - R}" y="${H - 6}" text-anchor="end" class="ts">λ (min AAS floor)</text><text x="${L}" y="${T - 8}" class="ts">¥/100g</text></svg>`;
+  s += `<text x="${W - R}" y="${H - 6}" text-anchor="end" class="ts">${esc(t('g2.frontier.xaxis'))}</text><text x="${L}" y="${T - 8}" class="ts">¥/100g</text></svg>`;
   $('g2-frontier-svg').innerHTML = s;
-  $('g2-lmax').textContent = fr.lambdaMax ? `${t('g2.frontier.lmax')} ≈ ${fixed(fr.lambdaMax, 4)}` : `${t('g2.frontier.lmax')} ≥ 2`;
+  $('g2-lmax').textContent = fr.lambdaMax
+    ? `${t('g2.frontier.lmax')} ≈ ${fixed(fr.lambdaMax, 4)} = ${fr.lambdaMax.toString()} ${t('g2.frontier.lmax.mean')}`
+    : `${t('g2.frontier.lmax')} ≥ 2`;
 }
 
 function renderG2Prov() {
@@ -525,7 +529,7 @@ function bindEvents() {
 // 只渲染当前 tab；隐藏 tab 首次激活或语言切换失配时才渲染（G2 v02 全套约 0.7s，不该在页面加载时白付）
 const renderedTabs = { g1: false, g2: false };
 function renderTab(tab) { if (tab === 'g1') renderG1(); else renderG2(); renderedTabs[tab] = true; }
-function renderAll() { renderTab(state.tab); }
+function renderAll() { applyI18n(); renderTab(state.tab); } // 初载必须先填 data-t 标签（v0.2.1 曾漏掉→首屏标题空白）
 
 // rAF 合帧：滑杆 input 高频触发时每帧至多渲染一次（重面板不排队积压）
 const pending = new Set();
